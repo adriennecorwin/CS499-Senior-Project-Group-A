@@ -34,4 +34,4 @@ for tweet in response:
 		tweetDict['urls'].append(uDict['url'])
 	tweets.append(tweetDict)
 
-print(tweetDict)
+print(tweets)
