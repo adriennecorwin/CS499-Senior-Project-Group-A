@@ -2,7 +2,7 @@ import tweepy
 import mysql.connector
 
 class TweetModel:
-	def __init__(self, username, screenName, userLocation, isVerified, createdAt, text, hashtags, numRetweets, numFavorites, isRetweet):
+	def __init__(self, username, screenName, userLocation, isVerified, createdAt, text, hashtags, numRetweets, numFavorites, isRetweet, urls):
 		self.username = username
 		self.screenName = screenName	
 		self.userLocation = userLocation
@@ -13,6 +13,7 @@ class TweetModel:
 		self.numRetweets = numRetweets
 		self.numFavorites = numFavorites
 		self.isRetweet = isRetweet
+		self.urls = urls
 		#self.lastUpdated = now
 
 class SearchController:
@@ -53,7 +54,12 @@ class SearchController:
 			hashtags = []
 			for hDict in h:
 				hashtags.append(hDict['text'])
-			tweet = Tweet(tweet.user.name, tweet.user.screen_name, tweet.user.location, tweet.created_at, tweet.full_text, hashtags, tweet.retweet_count, tweet.favorite_count, tweet.retweeted)
+			u = tweet.entities.get('urls')
+			urls = []
+			for uDict in u:
+				urls.append(uDict['url'])
+			
+			tweet = Tweet(tweet.user.name, tweet.user.screen_name, tweet.user.location, tweet.created_at, tweet.full_text, hashtags, tweet.retweet_count, tweet.favorite_count, tweet.retweeted, url)
 			tweets.append(tweet)
 		return tweets
 
@@ -85,8 +91,8 @@ class SearchController:
 	def searchTwitter(self):
 		#should iterate through self.twitterSearchQueries
 		#but for now just do it for Tom Brady
-		allSearchResults = ()
-		response = api.search(q="Tom Brady", count=100, tweet_mode='extended')
+		allSearchResults = set()
+		response = self.api.search(q="Tom Brady", count=100, tweet_mode='extended')
 		tweets = parseTwitterResponse(response)
 		for tweet in tweets:
 			allSearchResults.add(tweet)

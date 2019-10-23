@@ -9,7 +9,7 @@ access_token_secret = "#####"
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_token, access_token_secret)
 
-self.api = tweepy.API(auth)
+api = tweepy.API(auth)
 
 tweets = []
 response = api.search(q="Tom Brady", count=100, tweet_mode='extended')
@@ -28,7 +28,7 @@ for tweet in response:
 	tweetDict['hashtags'] = []
 	for hDict in h:
 		tweetDict['hashtags'].append(hDict['text'])
-	u = tweet.entities.get('hashtags')
+	u = tweet.entities.get('urls')
 	tweetDict['urls'] = []
 	for uDict in u:
 		tweetDict['urls'].append(uDict['url'])
