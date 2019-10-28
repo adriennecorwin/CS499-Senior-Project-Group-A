@@ -1,7 +1,38 @@
 <!DOCTYPE html>
-<html>
-<head>
-Hello, this is a placeholder for the webpage.
-</head>
-</html>
+ <!-- Team A / Supreme Court Twitter  -->
 
+ <html>
+    <td><input type="submit" name = "login" value="Log In/Register"></td>
+    <head><center><font size = "10">SCOTUS Tweet Database</font></head></center></head>
+    <style>
+    body {
+        background-color:lightgray;
+    }
+    </style>
+    <br>
+    <br>
+    <br>
+	<body>
+        <center>
+        <form action="universal.cgi" method="GET">
+		<table>
+            <tr>
+                <th>User</th>
+                <th>Hashtag</th>
+                <th>Keyword</th>
+                <th>Date</th>
+                <th></th>
+                
+            </tr>
+            <tr>
+                <td><input type="user" name ="myuser"></td>
+                <td><input type="hashtag" name ="myhashtag"></td>
+                <td><input type="keyword" name ="mykeyword"></td>
+                <td><input type="daterange" name ="mydaterange"></td>
+                <td><input type="submit" name = "submit1" value="Search"></td>
+            </tr>
+        </table>
+        </center>
+        <br>
+    </body>
+</html>
