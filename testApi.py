@@ -1,10 +1,10 @@
 import tweepy
+import csv
+consumer_key = "065p3Ddh3T1rxoAbhsNQKTT0r"
+consumer_secret = "qHTYc1aLUfVFCezVLz1U0yPphthRM0DevNL2AKSxG4LTrzWiWA"
 
-consumer_key = "#####"
-consumer_secret = "#####"
-
-access_token = "#####"
-access_token_secret = "#####"
+access_token = "1176877630382985217-qFO9wveUf0LycpO8cP23ISSVMr1U3g"
+access_token_secret = "1zr5Guity4uffdYKQ9XCfP6M1r1e8VmeLd6y3Cm9wzoBk"
 
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_token, access_token_secret)
@@ -30,8 +30,18 @@ for tweet in response:
 		tweetDict['hashtags'].append(hDict['text'])
 	u = tweet.entities.get('urls')
 	tweetDict['urls'] = []
+	m = tweet.entities.get('media')
+	tweetDict['media'] = []
+	if m:
+		for mDict in m:
+			tweetDict['media'].append(mDict['display_url'])
 	for uDict in u:
 		tweetDict['urls'].append(uDict['url'])
 	tweets.append(tweetDict)
 
 print(tweets)
+
+with open('employee_file.csv', mode='w') as csv_file:
+	employee_writer = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+	employee_writer.writerow([tweets[0]['text'], tweets[1]['text'], tweets[2]['text']])
+
