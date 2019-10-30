@@ -1,0 +1,5 @@
+cd Desktop (venv and mysite file on desktop)
+source venv/bin/activate (venv file on desktop)
+cd mysite
+python manage.py runserver
+
