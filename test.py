@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import re
 
 class Tweet:
-	def __init__(self, username, screenName, userLocation, isVerified, createdAt, text, hashtags, numRetweets, numFavorites, isQuoteTweet, urls):
+	def __init__(self, username, screenName, userLocation, isVerified, createdAt, isRetweet, originalText, commentText, hashtags, urls, numRetweetsOriginal, numRetweetsNew, numFavoritesOriginal, numFavoritesNew):
 		self.username = username.replace("\'", "\\\'")
 		self.screenName = screenName.replace("\'", "\\\'")
 		self.userLocation = userLocation.replace("\'", "\\\'")
@@ -13,15 +13,22 @@ class Tweet:
 		else:
 			self.isVerified = 0
 		self.createdAt = createdAt
-		self.text = text.replace("\'", "\\\'")
-		self.hashtags = hashtags
-		self.numRetweets = numRetweets
-		self.numFavorites = numFavorites
-		if isQuoteTweet:
-			self.isQuoteTweet = 1
+		if isRetweet:
+			self.isRetweet = 1
 		else:
-			self.isQuoteTweet = 0
+			self.isRetweet = 0
+		self.originalText = originalText.replace("\'", "\\\'")
+
+		self.commentText = commentText
+		if commentText != None:
+			self.commentText = commentText.replace("\'", "\\\'")
+
+		self.hashtags = hashtags
 		self.urls = urls
+		self.numRetweetsOriginal = numRetweetsOriginal
+		self.numRetweetsNew = numRetweetsNew
+		self.numFavoritesOriginal = numFavoritesOriginal
+		self.numFavoritesNew = numFavoritesNew
 		#self.lastUpdated = now
 
 class SearchController:
@@ -33,17 +40,17 @@ class SearchController:
 		self.database = mysql.connector.connect(
   			host="localhost",
   			user="root",
-  			passwd="#####",
+  			passwd="u2109861",
   			database="SupremeCourtTwitter"
 		)
 
 		self.cursor = self.database.cursor()
 
-		consumer_key = "#####"
-		consumer_secret = "#####"
+		consumer_key = "065p3Ddh3T1rxoAbhsNQKTT0r"
+		consumer_secret = "qHTYc1aLUfVFCezVLz1U0yPphthRM0DevNL2AKSxG4LTrzWiWA"
 
-		access_token = "#####"
-		access_token_secret = "#####"
+		access_token = "1176877630382985217-qFO9wveUf0LycpO8cP23ISSVMr1U3g"
+		access_token_secret = "1zr5Guity4uffdYKQ9XCfP6M1r1e8VmeLd6y3Cm9wzoBk"
 
 		auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 		auth.set_access_token(access_token, access_token_secret)
@@ -116,26 +123,35 @@ class SearchController:
 		# 	tweets.append(tweet)
 		# return tweets
 		tweets = []
-		for r in response:
-			ts = []
-			if hasattr(r, 'retweeted_status'):
-				ts.append(r.retweeted_status)
-			elif hasattr(r, 'quoted_status'):
-				ts.append(r.quoted_status)
-				r.is_quote_status = True
-				ts.append(r)
-			for t in ts:
-				h = t.entities.get('hashtags')
-				hashtags = []
-				for hDict in h:
-					hashtags.append(hDict['text'])
-				u = t.entities.get('urls')
-				urls = []
-				for uDict in u:
-					urls.append(uDict['url'])
+		for t in response:
+			isRetweet = False
+			commentText = None
+			originalText = t.full_text
+			numRetweetsOriginal = None
+			numFavoritesOriginal = None
+			if hasattr(t, 'retweeted_status'):
+				isRetweet = True
+				numRetweetsOriginal = t.retweeted_status.retweet_count
+				numFavoritesOriginal = t.retweeted_status.favorite_count
 
-				tweet = Tweet(t.user.screen_name, t.user.name, t.user.location, t.user.verified, t.created_at, t.full_text, hashtags, t.retweet_count, t.favorite_count, r.is_quote_status, urls)
-				tweets.append(tweet)
+			elif hasattr(t, 'quoted_status'):
+				isRetweet = True
+				originalText = t.quoted_status.full_text
+				commentText = t.full_text
+				numRetweetsOriginal = t.quoted_status.retweet_count
+				numFavoritesOriginal = t.quoted_status.favorite_count
+
+			h = t.entities.get('hashtags')
+			hashtags = []
+			for hDict in h:
+				hashtags.append(hDict['text'])
+			u = t.entities.get('urls')
+			urls = []
+			for uDict in u:
+				urls.append(uDict['url'])
+
+			tweet = Tweet(t.user.screen_name, t.user.name, t.user.location, t.user.verified, t.created_at, isRetweet, originalText, commentText, hashtags, urls, numRetweetsOriginal, t.retweet_count, numFavoritesOriginal, t.favorite_count)
+			tweets.append(tweet)
 		return tweets
 
 	def separateNewFromExisting(self, tweets):
@@ -185,8 +201,9 @@ class SearchController:
 					self.cursor.execute(insertNewUrlQuery, insertUrlVals)
 					self.database.commit()
 
-			insertNewTweetQuery = "INSERT INTO tweet (username, created_at, text, num_retweets, num_favorites, is_quote_tweet) VALUES (%s, %s, %s, %s, %s, %s)"
-			insertTweetVals = (tweet.username, tweet.createdAt.strftime('%Y-%m-%d %H:%M:%S'), tweet.text, tweet.numRetweets, tweet.numFavorites, tweet.isQuoteTweet)
+			insertNewTweetQuery = "INSERT INTO tweet (username, created_at, is_retweet, original_text, comment_text, num_retweets_original, num_retweets_new, num_favorites_original, num_favorites_new) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+
+			insertTweetVals = (tweet.username, tweet.createdAt.strftime('%Y-%m-%d %H:%M:%S'), tweet.isRetweet, tweet.originalText, tweet.commentText, tweet.numRetweetsOriginal, tweet.numRetweetsNew, tweet.numFavoritesOriginal, tweet.numFavoritesNew)
 			self.cursor.execute(insertNewTweetQuery, insertTweetVals)
 			self.database.commit()
 
@@ -209,14 +226,13 @@ class SearchController:
 				self.database.commit()
 
 	def update(self, tweets):
+		#TODO: fix for new db structure and using tweet obj instead of dict?
 		for tweet in tweets:
 			updateQuery = "UPDATE tweet SET num_retweets=" + tweet['numRetweets'] + ", num_favorites=" + tweet['num_favorites'] + " WHERE username=\'" + tweet['username'] + "\' and created_at=" + tweet['createdAt']
 			self.cursor.execute(updateQuery)
 			self.database.commit()
 	
 	def searchTwitter(self):
-		#should iterate through self.twitterSearchQueries
-		#but for now just do it for Tom Brady
 		allSearchResults = set()
 		for query in self.twitterSearchQueries:
 			response = self.api.search(q=query, count=100, tweet_mode='extended')
