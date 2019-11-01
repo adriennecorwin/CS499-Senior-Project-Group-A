@@ -155,16 +155,16 @@ def insert(tweets):
         if not User.objects.filter(username=tweet['username']).exists():
             user = User(username=tweet['username'], screenName=tweet['screenName'], location=tweet['userLocation'], isVerified=tweet['isVerified'])
             user.save()
-        # else:
-        #     user = User.objects.filter(username=tweet['username'])
+        else:
+            user = User.objects.filter(username=tweet['username'])[0]
         hashtags = []
         for h in tweet['hashtags']:
             if not Hashtag.objects.filter(hashtagText=h).exists():
                 hashtag = Hashtag(hashtagText=h)
                 hashtag.save()
-            # else:
-            #     hashtag = Hashtag.objects.filter(hashtagText=h)
-            # hashtags.append(hashtag)
+            else:
+                hashtag = Hashtag.objects.filter(hashtagText=h)[0]
+            hashtags.append(hashtag)
 
         urls = []
         for u in tweet['urls']:
@@ -172,9 +172,9 @@ def insert(tweets):
                 url = Url(urlText=u)
                 url.save()
                 urls.append(url)
-            # else:
-            #     url = Url.objects.filter(urlText=u)
-            # urls.append(url)
+            else:
+                url = Url.objects.filter(urlText=u)[0]
+            urls.append(url)
 
         t = Tweet(user=user, createdAt=tweet['createdAt'], isRetweet=tweet['isRetweet'], originalText=tweet['originalText'], commentText=tweet['commentText'], numRetweetsOriginal=tweet['numRetweetsOriginal'], numRetweetsNew=tweet['numRetweetsNew'], numFavoritesOriginal=tweet['numFavoritesOriginal'], numFavoritesNew=tweet['numFavoritesNew'])
         t.save()
@@ -214,7 +214,7 @@ def pull():
 
 def index(request):
     global twitterSearchQueries
-    tweetsList = Tweet.objects.all()
+    tweetsList = Tweet.objects.all().order_by('-createdAt')
     paginator = Paginator(tweetsList, 24)
     page = request.GET.get('page')
     tweets = paginator.get_page(page)
