@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'myapp',
+    'materialize',
 ]
 
 MIDDLEWARE = [
@@ -76,9 +77,12 @@ WSGI_APPLICATION = 'mysite.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
+        'ENGINE': 'mysql.connector.django',
+        'NAME': 'SupremeCourtTwitter',
+        'USER': 'root',
+        'PASSWORD': 'u2109861',
+        'OPTIONS': {'charset': 'utf8mb4'},
+        }
 }
 
 
