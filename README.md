@@ -5,8 +5,11 @@ Download mysql locally
 Use this command to access mysql command line
 /usr/local/mysql/bin/mysql -uroot -p
 
-execute 
+execute in mysql command line
 mysql > create database SupremeCourtTwitter;
+
+execute in local repo directory
+pip install mysqlclient
 
 Inside the mysite folder of project directory
 
