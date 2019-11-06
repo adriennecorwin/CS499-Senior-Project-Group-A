@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <style>
 body,h1,h2,h3,h4,h5,h6 {font-family: "Raleway", sans-serif}
+
 </style>
 <body class="w3-light-grey w3-content" style="max-width:1600px">
 
@@ -48,6 +49,7 @@ body,h1,h2,h3,h4,h5,h6 {font-family: "Raleway", sans-serif}
                 <td><input type="submit" name = "submit1" value="Search"></td>
             </tr>
         </table>
+        </form>
     </div>
     </div>
   </header>
@@ -59,13 +61,15 @@ body,h1,h2,h3,h4,h5,h6 {font-family: "Raleway", sans-serif}
               <div class="card small">
                 <div class="card-content">
                   <span class="card-title activator grey-text text-darken-4">{{tweet.originalText}}<i class="material-icons right">more_vert</i></span>
-                  <p>@{{tweet.user.username}}</p>
+                  <h5>- @{{tweet.user.username}} {%if tweet.user.isVerified %}<i class="material-icons">check_circle</i>{% endif %}</h5>
                 </div>
                 <div class="card-reveal">
                   <span class="card-title grey-text text-darken-4"><i class="material-icons right">close</i></span>
-                  <p>{{tweet.createdAt}}</p>
-                  <p>Retweets: {{tweet.numRetweetsOriginal}}</p>
-                  <p>Favorites: {{tweet.numFavoritesOriginal}}</p>
+                  <h5>{{tweet.createdAt}}</h5>
+                  <h5>{{tweet.user.location}}</h5>
+                  <h5>Retweets: {{tweet.numRetweetsOriginal}}</h5>
+                  <h5>Favorites: {{tweet.numFavoritesOriginal}}</h5>
+                  <p>Last updated: {{tweet.lastUpdated}}</p><p/>
                 </div>
               </div>
             </div>
@@ -106,3 +110,11 @@ body,h1,h2,h3,h4,h5,h6 {font-family: "Raleway", sans-serif}
             {% endif %}
         </span>
     </div>
+</div>
+
+<style>
+.card {
+    margin-left: 20px;
+    margin-right: 20px;
+}
+</style>

@@ -28,6 +28,7 @@ class Tweet(models.Model):
     numRetweetsNew = models.IntegerField(null=True)
     numFavoritesOriginal = models.IntegerField()
     numFavoritesNew = models.IntegerField(null=True)
+    lastUpdated = models.DateTimeField()
 
     def getUsername(self):
         return self.user.username
