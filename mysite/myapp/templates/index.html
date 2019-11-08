@@ -1,9 +1,10 @@
-
+{% load static from staticfiles %}
 <!DOCTYPE html>
  <!-- Team A / Supreme Court Twitter -->
 
 <html>
 <title>SCOTUS Tweet Database</title>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
@@ -24,33 +25,39 @@ body,h1,h2,h3,h4,h5,h6 {font-family: "Raleway", sans-serif}
     <!-- Compiled and minified CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
     <!-- Compiled and minified JavaScript -->
+      <script type="text/javascript" src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <!--Import Google Icon Font-->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
     <div class="w3-container">
-    <h1><b>SCOTUS Tweet Database</b></h1>
-    <div class="w3-section w3-bottombar w3-padding-16">
-        <form action="universal.cgi" method="GET">
-        <table>
-            <tr>
-                <th>User</th>
-                <th>Hashtag</th>
-                <th>Keyword</th>
-                <th>Date</th>
-                <th></th>
-                
-            </tr>
-            <tr>
-                <td><input type="user" name ="myuser"></td>
-                <td><input type="hashtag" name ="myhashtag"></td>
-                <td><input type="keyword" name ="mykeyword"></td>
-                <td><input type="daterange" name ="mydaterange"></td>
-                <td><input type="submit" name = "submit1" value="Search"></td>
-            </tr>
-        </table>
-        </form>
-    </div>
+        <div class="center">
+        <h1><img src="{% static 'twitter-logo.png' %}" alt="Italian Trulli"><b>SCOTUS Tweet Database</b></h1>
+        </div>
+        <div class="w3-section w3-bottombar w3-padding-16">
+            <form action="/" method="GET">{% csrf_token %}
+            <table>
+                <tr>
+                    <th>User</th>
+                    <th>Hashtag</th>
+                    <th>Keyword</th>
+                    <th>Date</th>
+                    <th></th>
+
+                </tr>
+                <tr>
+                    <td><input type="user" name ="users"></td>
+                    <td><input type="hashtag" name ="hashtags"></td>
+                    <td><input type="keyword" name ="keywords"></td>
+                    <td><input type="daterange" name ="daterange"></td>
+                    <td><button class="btn-floating waves-effect waves-light btn" type="submit" name="search"><i class="material-icons">search</i></button></td>
+                    <td><a class="btn-floating waves-effect waves-light btn" href="?pull=true"><i class="material-icons">refresh</i></a></td>
+                    <td><a href="#" class="btn-floating waves-effect waves-light btn"><i class="material-icons">file_download</i></a></td>
+                </tr>
+            </table>
+            </form>
+        </div>
     </div>
   </header>
     {% for tweet in tweets %}
@@ -79,42 +86,132 @@ body,h1,h2,h3,h4,h5,h6 {font-family: "Raleway", sans-serif}
     {% endfor %}
 
     <div class="row">
-        <div class="w3-container w3-padding-large" style="margin-bottom:32px">
-            <p>
-                <button class="w3-button w3-dark-grey w3-padding-large w3-margin-top w3-margin-bottom">
-                    <i class="fa fa-download w3-margin-right"></i>Download
-                </button>
-            </p>
-        </div>
+        <a id="change-query-btn" class="btn-floating btn-large waves-effect waves-light red modal-trigger right" href="#modal1"><i class="material-icons">build</i></a>
     </div>
-    <div class="container">
-    <div class="row">
-        <a class="waves-effect waves-light btn" href="?pull=true">Pull Tweets</a>
-    </div>
+
+<div class="pagination">
+
+  {% if tweets.has_previous %}
+    <a class="pagination-action" href="?page=1">
+     <i class="fa fa-angle-double-left" aria-hidden="true"></i>
+    </a>
+    <a class="pagination-action" href="?page={{ tweets.previous_page_number }}">
+      <i class="fa fa-angle-left" aria-hidden="true"></i>
+    </a>
+  {% endif %}
+
+  {% for num in tweets.paginator.page_range %}
+
+    {% if tweets.number == num %}
+    <span class="pagination-number pagination-current">{{ num }}</span>
+    {% elif num > tweets.number|add:'-10' and num < tweets.number|add:'10' %}
+    <a class="pagination-number" href="?page={{ num }}">{{ num }}</a>
+    {% endif %}
+
+  {% endfor %}
+
+  {% if tweets.has_next %}
+    <a class="pagination-action" href="?page={{ tweets.next_page_number }}">
+      <i class="fa fa-angle-right" aria-hidden="true"></i>
+    </a>
+    <a class="pagination-action" href="?page={{ tweets.paginator.num_pages }}">
+      <i class="fa fa-angle-double-right" aria-hidden="true"></i>
+    </a>
+  {% endif %}
+
+</div>
+
+</header>
+
+<!-- Modal Structure -->
+<div id="modal1" class="modal bottom-sheet">
+    <div class="modal-content">
+      <h4>Search Twitter By</h4>
+        <div class="row">
+            <form class="col s12" action="changeQuery/" method="GET">{% csrf_token %}
+              <div class="row">
+                <div class="input-field col s6">
+                  <input id="pull-users" name="pull-users" type="text" class="validate">
+                  <label for="pull-users">Users</label>
+                </div>
+                <div class="input-field col s6">
+                  <input id="pull-not-users" name="pull-not-users" type="text" class="validate">
+                  <label for="pull-not-users">Unwanted Users</label>
+                </div>
+              </div>
+              <div class="row">
+                <div class="input-field col s6">
+                  <input id="pull-hashtags" name="pull-hashtags" type="text" class="validate">
+                  <label for="pull-hashtags">Hashtags</label>
+                </div>
+                <div class="input-field col s6">
+                  <input id="pull-keywords" name="pull-keywords" type="text" class="validate">
+                  <label for="pull-keywords">Keywords</label>
+                </div>
+              </div>
+              <div class="row">
+                <div class="input-field col s6">
+                  <input id="pull-since" name="pull-since" type="text" class="datepicker">
+                  <label for="pull-since">Since</label>
+                </div>
+                <div class="input-field col s6">
+                  <input id="pull-until" name="pull-until" type="text" class="datepicker">
+                  <label for="pull-until">Until</label>
+                </div>
+              </div>
+                <input class="waves-effect waves-light btn" type="submit" name ="change" value="Change">
+            </form>
         </div>
-
-    <div class="pagination">
-        <span class="step-links">
-            {% if tweets.has_previous %}
-                <a href="?page=1">&laquo; first</a>
-                <a href="?page={{ tweets.previous_page_number }}">previous</a>
-            {% endif %}
-
-            <span class="current">
-                Page {{ tweets.number }} of {{ tweets.paginator.num_pages }}.
-            </span>
-
-            {% if tweets.has_next %}
-                <a href="?page={{ tweets.next_page_number }}">next</a>
-                <a href="?page={{ tweets.paginator.num_pages }}">last &raquo;</a>
-            {% endif %}
-        </span>
     </div>
 </div>
 
+<script>
+    $(document).ready(function(){
+        $('.modal').modal();
+        $('.datepicker').datepicker();
+    });
+</script>
 <style>
-.card {
-    margin-left: 20px;
-    margin-right: 20px;
+    .card {
+        margin-left: 20px;
+        margin-right: 20px;
+    }
+    #change-query-btn {
+        margin-right: 40px;
+    }
+    .scroll-box {
+        overflow-y: scroll;
+        padding: 1rem
+    }
+    .pagination {
+    text-align: center;
+    margin-top: 1em;
+}
+
+.pagination-number {
+    padding: 0.5em 0.8em;
+    border-radius: 2px;
+    color: #fff;
+    background-color: #6D85C7;
+}
+
+.pagination-number:hover, .pagination-current {
+    background-color: #3354AA;
+}
+
+.pagination-action {
+    margin: 0 0.1em;
+    display: inline-block;
+    padding: 0.5em 0.5em;
+    color: #B9B9B9;
+    font-size: 1.3em;
+}
+
+.pagination-action:hover, .pagination-previous, .pagination-next {
+    color: #3354AA;
+}
+img {
+    height: 10%;
+    width: 10%;
 }
 </style>

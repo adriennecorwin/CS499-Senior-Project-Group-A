@@ -21,19 +21,29 @@ auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_token, access_token_secret)
 
 api = tweepy.API(auth)
+
+initialSearchDict = {}
+initialSearchDict['hashtags'] = ["scotus", 'supremecourt', 'ussc', 'chiefjustice']
+initialSearchDict['andHashtags'] = False
+initialSearchDict['accounts'] = ['stevenmazie', 'JeffreyToobin', 'DCCIR']
+initialSearchDict['notAccounts'] = ['John_Scotus', 'ScotusCC']
+initialSearchDict['fromDate'] = datetime.strftime(datetime.now() - timedelta(1), '%Y-%m-%d')
+initialSearchDict['toDate'] = datetime.strftime(datetime.now(), '%Y-%m-%d')
+initialSearchDict['keywords'] = []
 twitterSearchQueries = []
 
-def buildTwitterSearchQuery():
+# build queries based on dictionary from view class and appends them to self.twitterSearchQueries
+def buildTwitterSearchQuery(searchDict):
     global twitterSearchQueries
     twitterSearchQueries = []
-    # build queries based on dictionary from view class and appends them to self.twitterSearchQueries
-    searchDict = {}
-    searchDict['hashtags'] = ["scotus", 'supremecourt', 'ussc', 'chiefjustice']
-    searchDict['andHashtags'] = False
-    searchDict['accounts'] = ['stevenmazie', 'JeffreyToobin', 'DCCIR']
-    searchDict['notAccounts'] = ['John_Scotus', 'ScotusCC']
-    searchDict['fromDate'] = datetime.strftime(datetime.now() - timedelta(1), '%Y-%m-%d')
-    searchDict['toDate'] = datetime.strftime(datetime.now(), '%Y-%m-%d')
+    keywordQuery = ""
+    for i in range(len(searchDict['keywords'])):
+        keywordQuery += searchDict['keywords'][i]
+        if i < len(searchDict['keywords']) - 1:
+            if searchDict['andKeywords']:
+                keywordQuery += " AND "
+            else:
+                keywordQuery += " OR "
 
     hashtagQuery = ""
     for i in range(len(searchDict['hashtags'])):
@@ -44,10 +54,14 @@ def buildTwitterSearchQuery():
             else:
                 hashtagQuery += " OR "
 
-    for i in range(len(searchDict['notAccounts'])):
-        hashtagQuery += " -from:" + searchDict['notAccounts'][i]
+    if hashtagQuery != "":
+        twitterSearchQueries.append(hashtagQuery)
+    if keywordQuery != "":
+        twitterSearchQueries.append(keywordQuery)
 
-    twitterSearchQueries.append(hashtagQuery)
+    for i in range(len(twitterSearchQueries)):
+        for j in range(len(searchDict['notAccounts'])):
+            twitterSearchQueries[i] += " -from:" + searchDict['notAccounts'][j]
 
     accountsQuery = ""
     for i in range(len(searchDict['accounts'])):
@@ -58,7 +72,9 @@ def buildTwitterSearchQuery():
         accountsQuery += "@" + searchDict['accounts'][i]
         if i < len(searchDict['accounts']) - 1:
             accountsQuery += " OR "
-    twitterSearchQueries.append(accountsQuery)
+
+    if accountsQuery != "":
+        twitterSearchQueries.append(accountsQuery)
 
     if searchDict['fromDate'] != "":
         fromDateQuery = " since:" + searchDict['fromDate']
@@ -69,7 +85,7 @@ def buildTwitterSearchQuery():
         for i in range(len(twitterSearchQueries)):
             twitterSearchQueries[i] += toDateQuery
 
-buildTwitterSearchQuery()
+    print(twitterSearchQueries)
 
 def parseTwitterResponse(response):
     tweets = []
@@ -108,18 +124,18 @@ def parseTwitterResponse(response):
             urls.append(uDict['url'])
 
         tweet = {}
-        tweet['username'] = t.user.screen_name.replace("\'", "\\\'")
-        tweet['screenName'] = t.user.name.replace("\'", "\\\'")
-        tweet['userLocation'] = t.user.location.replace("\'", "\\\'")
+        tweet['username'] = t.user.screen_name
+        tweet['screenName'] = t.user.name
+        tweet['userLocation'] = t.user.location
         tweet['isVerified'] = t.user.verified
         tweet['userUrl'] = t.user.url
         tweet['createdAt'] = t.created_at
         tweet['isRetweet'] = isRetweet
 
-        tweet['originalText'] = originalText.replace("\'", "\\\'")
+        tweet['originalText'] = originalText
         tweet['commentText'] = commentText
         if commentText != None:
-            tweet['commentText'] = tweet['commentText'].replace("\'", "\\\'")
+            tweet['commentText'] = tweet['commentText']
         tweet['hashtags'] = hashtags
         tweet['urls'] = urls
         tweet['numRetweetsOriginal'] = numRetweetsOriginal
@@ -135,6 +151,7 @@ def parseTwitterResponse(response):
 def searchTwitter():
     global twitterSearchQueries, api
     allSearchResults = []
+    print("search:", twitterSearchQueries)
     for query in twitterSearchQueries:
         response = api.search(q=query, count=25, tweet_mode='extended')
         tweets = parseTwitterResponse(response)
@@ -217,7 +234,8 @@ def addToDatabase(tweets):
 
 def pull():
     searchResults = searchTwitter()
-    addToDatabase(searchResults)
+    print(searchResults)
+    # addToDatabase(searchResults)
     print("pulled")
 
 #https://stackoverflow.com/questions/2223157/how-to-execute-a-function-asynchronously-every-60-seconds-in-python/2223182
@@ -227,5 +245,6 @@ def runPull(pullEvent):
     if not pullEvent.is_set():
         threading.Timer(120, runPull, [pullEvent]).start()
 
+buildTwitterSearchQuery(initialSearchDict)
 pullEvent = threading.Event()
 runPull(pullEvent)
