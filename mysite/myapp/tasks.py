@@ -6,7 +6,8 @@ from .models import HashtagLog
 from .models import UrlLog
 
 from datetime import datetime, timedelta
-
+from django.utils import timezone
+import pytz
 import threading
 
 import tweepy
@@ -27,8 +28,8 @@ initialSearchDict['hashtags'] = ["scotus", 'supremecourt', 'ussc', 'chiefjustice
 initialSearchDict['andHashtags'] = False
 initialSearchDict['accounts'] = ['stevenmazie', 'JeffreyToobin', 'DCCIR']
 initialSearchDict['notAccounts'] = ['John_Scotus', 'ScotusCC']
-initialSearchDict['fromDate'] = datetime.strftime(datetime.now() - timedelta(1), '%Y-%m-%d')
-initialSearchDict['toDate'] = datetime.strftime(datetime.now(), '%Y-%m-%d')
+initialSearchDict['fromDate'] = datetime.strftime(timezone.now() - timedelta(1), '%Y-%m-%d')
+initialSearchDict['toDate'] = datetime.strftime(timezone.now(), '%Y-%m-%d')
 initialSearchDict['keywords'] = []
 twitterSearchQueries = []
 
@@ -129,7 +130,9 @@ def parseTwitterResponse(response):
         tweet['userLocation'] = t.user.location
         tweet['isVerified'] = t.user.verified
         tweet['userUrl'] = t.user.url
-        tweet['createdAt'] = t.created_at
+        # tweet['createdAt'] = datetime.strptime(t.created_at, '%a %b %d %H:%M:%S +0000 %Y').replace(tzinfo=pytz.UTC)
+        tweet['createdAt'] = t.created_at.replace(tzinfo=pytz.UTC)
+        print(tweet['createdAt'])
         tweet['isRetweet'] = isRetweet
 
         tweet['originalText'] = originalText
@@ -190,7 +193,7 @@ def insert(tweet):
     t = Tweet(user=user, createdAt=tweet['createdAt'], isRetweet=tweet['isRetweet'], originalText=tweet['originalText'],
               commentText=tweet['commentText'], numRetweetsOriginal=tweet['numRetweetsOriginal'],
               numRetweetsNew=tweet['numRetweetsNew'], numFavoritesOriginal=tweet['numFavoritesOriginal'],
-              numFavoritesNew=tweet['numFavoritesNew'], lastUpdated=datetime.now().strftime("%Y-%m-%d %H:%M"))
+              numFavoritesNew=tweet['numFavoritesNew'], lastUpdated=timezone.now().strftime("%Y-%m-%d %H:%M"))
 
     t.save()
 
@@ -216,7 +219,7 @@ def update(oldTweet, newTweet):
     if oldTweet.numFavoritesNew != newTweet['numFavoritesNew']:
         oldTweet.numFavoritesNew = newTweet['numFavoritesNew']
 
-    oldTweet.lastUpdated = datetime.now().strftime("%Y-%m-%d %H:%M")
+    oldTweet.lastUpdated = timezone.now().strftime("%Y-%m-%d %H:%M")
     print("update")
     print(oldTweet)
     oldTweet.save()
@@ -235,7 +238,7 @@ def addToDatabase(tweets):
 def pull():
     searchResults = searchTwitter()
     print(searchResults)
-    # addToDatabase(searchResults)
+    addToDatabase(searchResults)
     print("pulled")
 
 #https://stackoverflow.com/questions/2223157/how-to-execute-a-function-asynchronously-every-60-seconds-in-python/2223182
@@ -245,6 +248,6 @@ def runPull(pullEvent):
     if not pullEvent.is_set():
         threading.Timer(120, runPull, [pullEvent]).start()
 
-buildTwitterSearchQuery(initialSearchDict)
-pullEvent = threading.Event()
-runPull(pullEvent)
+# buildTwitterSearchQuery(initialSearchDict)
+# pullEvent = threading.Event()
+# runPull(pullEvent)

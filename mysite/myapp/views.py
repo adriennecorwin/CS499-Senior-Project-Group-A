@@ -13,7 +13,9 @@ from .models import HashtagLog
 from .models import UrlLog
 
 from .tasks import buildTwitterSearchQuery
+from django.db.models import Q
 from datetime import datetime
+import pytz
 # Create your views here.
 
 def index(request):
@@ -26,13 +28,59 @@ def index(request):
     if request.GET.get("pull"):
         if request.GET.get("pull") == "true":
             return redirect('/')
-    return render(request, 'index.html', {'tweets':tweets})
+    userQueries = []
+    keywordQueryies = []
+    hashtagResults = []
 
-def search(request):
-    searchDict = {}
-    searchDict['accounts'] = request.POST['users'].split(" ")
-    searchDict['hashtags'] = request.POST['hashtags'].split(" ")
-    searchDict['keywords'] = request.POST['keywords'].split(" ")
+    fromDate = None
+    toDate = None
+    search = False
+
+    if request.GET.get("from"):
+        search = True
+        fromDate = datetime.strptime(request.GET.get("from"), '%b %d, %Y').replace(tzinfo=pytz.UTC)
+    if request.GET.get("to"):
+        search = True
+        toDate = datetime.strptime(request.GET.get("to"), '%b %d, %Y').replace(tzinfo=pytz.UTC)
+    if request.GET.get("users"):
+        search = True
+        userQueries = [Q(user__username=user) for user in list(part for part in request.GET.get("users").split(" ") if part != '')]
+    if request.GET.get("hashtags"):
+        search = True
+        for hashtag in list(part for part in request.GET.get("hashtags").split(" ") if part != ''):
+            hashtagResults += [r.tweet for r in HashtagLog.objects.all().select_related('tweet').select_related('hashtag').filter(hashtag__hashtagText=hashtag)]
+    if request.GET.get("keywords"):
+        search = True
+        keywordQueryies = [Q(originalText__icontains=keyword) for keyword in list(part for part in request.GET.get("keywords").split(" ") if part != '')]
+
+    queries = userQueries + keywordQueryies
+
+    if queries:
+        query = queries.pop()
+
+        for item in queries:
+            query |= item
+
+        tweetsList = list(Tweet.objects.filter(query))
+
+        tweetsList += hashtagResults
+    elif hashtagResults:
+        tweetsList = hashtagResults
+    if search:
+        tweetsList = sorted(tweetsList, key=lambda k: k.createdAt, reverse=True)
+
+        if fromDate and toDate:
+            tweetsList = [x for x in tweetsList if x.createdAt >= fromDate and x.createdAt <= toDate]
+        elif fromDate:
+            tweetsList = [x for x in tweetsList if x.createdAt >= fromDate]
+        elif toDate:
+            tweetsList = [x for x in tweetsList if x.createdAt <= toDate]
+
+        paginator = Paginator(tweetsList, 24)
+        page = request.GET.get('page')
+        tweets = paginator.get_page(page)
+
+    return render(request, 'index.html', {'tweets':tweets})
 
 def setTwitterSearchQuery(request):
     searchDict = {}

@@ -5,91 +5,94 @@
 <html>
 <title>SCOTUS Tweet Database</title>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-<style>
-body,h1,h2,h3,h4,h5,h6 {font-family: "Raleway", sans-serif}
-
-</style>
-<body class="w3-light-grey w3-content" style="max-width:1600px">
-
-<!-- Overlay effect when opening sidebar on small screens -->
-<div class="w3-overlay w3-hide-large w3-animate-opacity" onclick="w3_close()" style="cursor:pointer" title="close side menu" id="myOverlay"></div>
-<!-- !PAGE CONTENT! -->
-<div class="w3-main">
-  <!-- Header -->
-  <header id="portfolio">
+<!-- Header -->
+<header id="portfolio">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <!-- Compiled and minified CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
     <!-- Compiled and minified JavaScript -->
-      <script type="text/javascript" src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
-
+  <script type="text/javascript" src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <!--Import Google Icon Font-->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</header>
 
-    <div class="w3-container">
-        <div class="center">
-        <h1><img src="{% static 'twitter-logo.png' %}" alt="Italian Trulli"><b>SCOTUS Tweet Database</b></h1>
-        </div>
-        <div class="w3-section w3-bottombar w3-padding-16">
-            <form action="/" method="GET">{% csrf_token %}
-            <table>
-                <tr>
-                    <th>User</th>
-                    <th>Hashtag</th>
-                    <th>Keyword</th>
-                    <th>Date</th>
-                    <th></th>
+<style>
+body,h1,h2,h3,h4,h5,h6 {font-family: "Raleway", sans-serif}
+</style>
 
-                </tr>
-                <tr>
-                    <td><input type="user" name ="users"></td>
-                    <td><input type="hashtag" name ="hashtags"></td>
-                    <td><input type="keyword" name ="keywords"></td>
-                    <td><input type="daterange" name ="daterange"></td>
-                    <td><button class="btn-floating waves-effect waves-light btn" type="submit" name="search"><i class="material-icons">search</i></button></td>
-                    <td><a class="btn-floating waves-effect waves-light btn" href="?pull=true"><i class="material-icons">refresh</i></a></td>
-                    <td><a href="#" class="btn-floating waves-effect waves-light btn"><i class="material-icons">file_download</i></a></td>
-                </tr>
-            </table>
-            </form>
-        </div>
-    </div>
-  </header>
-    {% for tweet in tweets %}
-        {% if forloop.counter|divisibleby:2 == False%}
-            <div class="row">
-        {% endif %}
-            <div class="col s6">
-              <div class="card small">
-                <div class="card-content">
-                  <span class="card-title activator grey-text text-darken-4">{{tweet.originalText}}<i class="material-icons right">more_vert</i></span>
-                  <h5>- @{{tweet.user.username}} {%if tweet.user.isVerified %}<i class="material-icons">check_circle</i>{% endif %}</h5>
-                </div>
-                <div class="card-reveal">
-                  <span class="card-title grey-text text-darken-4"><i class="material-icons right">close</i></span>
-                  <h5>{{tweet.createdAt}}</h5>
-                  <h5>{{tweet.user.location}}</h5>
-                  <h5>Retweets: {{tweet.numRetweetsOriginal}}</h5>
-                  <h5>Favorites: {{tweet.numFavoritesOriginal}}</h5>
-                  <p>Last updated: {{tweet.lastUpdated}}</p><p/>
-                </div>
-              </div>
+<body class="w3-light-grey w3-content" style="max-width:1600px">
+    <!-- !PAGE CONTENT! -->
+    <div class="w3-main">
+        <div class="w3-container">
+            <div class="center grey darken-3 white-text" id="heading">
+            <h1><img src="{% static 'twitter-logo copy.png' %}" alt="Twitter Logo"><b>SCOTUS Tweet Database</b></h1>
             </div>
-        {% if forloop.counter|divisibleby:2 %}
+            <div class="w3-section w3-bottombar w3-padding-16">
+                <form action="" method="GET">{% csrf_token %}
+                <table>
+                    <tr>
+                        <th>User</th>
+                        <th>Hashtag</th>
+                        <th>Keyword</th>
+                        <th>From</th>
+                        <th>To</th>
+
+                    </tr>
+                    <tr>
+                        <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="validate" name="users" value="{{ request.GET.users }}"></td>
+                        <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="validate" name="hashtags" value="{{ request.GET.hashtags }}"></td>
+                        <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="validate" name="keywords" value="{{ request.GET.keywords }}"></td>
+                        <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="datepicker" name="from" value="{{ request.GET.from }}"></td>
+                        <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="datepicker" name="to" value="{{ request.GET.to }}"></td>
+
+                        <td><button class="btn-floating waves-effect waves-light btn" type="submit" name="search"><i class="material-icons">search</i></button></td>
+                        <td><a class="btn-floating waves-effect waves-light btn" href="?pull=true"><i class="material-icons">refresh</i></a></td>
+                        <td><a href="#" class="btn-floating waves-effect waves-light btn"><i class="material-icons">file_download</i></a></td>
+                    </tr>
+                </table>
+                </form>
             </div>
-        {% endif %}
-    {% endfor %}
-
-    <div class="row">
-        <a id="change-query-btn" class="btn-floating btn-large waves-effect waves-light red modal-trigger right" href="#modal1"><i class="material-icons">build</i></a>
+        </div>
+        {% for tweet in tweets %}
+            {% if forloop.counter|divisibleby:2 == False%}
+                <div class="row">
+            {% endif %}
+                <div class="col s6">
+                  <div class="card small">
+                    <div class="card-content">
+                      <span class="card-title activator grey-text text-darken-4">{{tweet.originalText}}<i class="material-icons right">more_vert</i></span>
+                      <h5>- @{{tweet.user.username}} {%if tweet.user.isVerified %}<i class="material-icons">check_circle</i>{% endif %}</h5>
+                    </div>
+                    <div class="card-reveal">
+                      <span class="card-title grey-text text-darken-4"><i class="material-icons right">close</i></span>
+                      <h5>{{tweet.createdAt}}</h5>
+                      <h5>{{tweet.user.location}}</h5>
+                      <h5>Retweets: {{tweet.numRetweetsOriginal}}</h5>
+                      <h5>Favorites: {{tweet.numFavoritesOriginal}}</h5>
+                        {% load tz %}
+                        {% localtime on %}
+                      <p>Last updated: {{tweet.lastUpdated}}</p><p/>
+                        {% endlocaltime %}
+                    </div>
+                  </div>
+                </div>
+            {% if forloop.counter|divisibleby:2 %}
+                </div>
+            {% endif %}
+        {% endfor %}
     </div>
+</body>
 
-<div class="pagination">
+<div class="row">
+    <a id="change-query-btn" class="btn-floating btn-large waves-effect waves-light red modal-trigger right" href="#modal1"><i class="material-icons">build</i></a>
+</div>
+
+<div class="pagination row container">
 
   {% if tweets.has_previous %}
     <a class="pagination-action" href="?page=1">
@@ -121,7 +124,6 @@ body,h1,h2,h3,h4,h5,h6 {font-family: "Raleway", sans-serif}
 
 </div>
 
-</header>
 
 <!-- Modal Structure -->
 <div id="modal1" class="modal bottom-sheet">
@@ -179,39 +181,43 @@ body,h1,h2,h3,h4,h5,h6 {font-family: "Raleway", sans-serif}
     #change-query-btn {
         margin-right: 40px;
     }
+    #heading {
+        border-radius: 25px;
+    }
+
     .scroll-box {
         overflow-y: scroll;
         padding: 1rem
     }
     .pagination {
-    text-align: center;
-    margin-top: 1em;
-}
+        text-align: center;
+        margin-top: 1em;
+    }
 
-.pagination-number {
-    padding: 0.5em 0.8em;
-    border-radius: 2px;
-    color: #fff;
-    background-color: #6D85C7;
-}
+    .pagination-number {
+        padding: 0.5em 0.8em;
+        border-radius: 2px;
+        color: #fff;
+        background-color: #009688;
+    }
 
-.pagination-number:hover, .pagination-current {
-    background-color: #3354AA;
-}
+    .pagination-number:hover, .pagination-current {
+        background-color: #00796b;
+    }
 
-.pagination-action {
-    margin: 0 0.1em;
-    display: inline-block;
-    padding: 0.5em 0.5em;
-    color: #B9B9B9;
-    font-size: 1.3em;
-}
+    .pagination-action {
+        margin: 0 0.1em;
+        display: inline-block;
+        padding: 0.5em 0.5em;
+        color: #B9B9B9;
+        font-size: 1.3em;
+    }
 
-.pagination-action:hover, .pagination-previous, .pagination-next {
-    color: #3354AA;
-}
-img {
-    height: 10%;
-    width: 10%;
-}
+    .pagination-action:hover, .pagination-previous, .pagination-next {
+        color: #3354AA;
+    }
+    img {
+        height: 10%;
+        width: 10%;
+    }
 </style>
