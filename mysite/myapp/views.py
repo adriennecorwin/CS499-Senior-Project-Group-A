@@ -42,6 +42,7 @@ def index(request):
     #download
     if request.GET.get("csv-name"):
         download(request.GET.get("csv-name"))
+        return render(request, 'index.html', {'tweets': tweets, 'twitterSearchDict': currentTwitterSearchDict, 'downloaded':True})
 
     #search
     userQueries = []
@@ -96,7 +97,7 @@ def index(request):
         page = request.GET.get('page')
         tweets = paginator.get_page(page)
 
-    return render(request, 'index.html', {'tweets':tweets, 'twitterSearchDict': currentTwitterSearchDict})
+    return render(request, 'index.html', {'tweets':tweets, 'twitterSearchDict':currentTwitterSearchDict, 'downloaded':False})
 
 def setTwitterSearchQuery(request):
     global currentTwitterSearchDict

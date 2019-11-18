@@ -12,11 +12,11 @@ import threading
 
 import tweepy
 
-consumer_key = "065p3Ddh3T1rxoAbhsNQKTT0r"
-consumer_secret = "qHTYc1aLUfVFCezVLz1U0yPphthRM0DevNL2AKSxG4LTrzWiWA"
+consumer_key = "#####"
+consumer_secret = "#####"
 
-access_token = "1176877630382985217-qFO9wveUf0LycpO8cP23ISSVMr1U3g"
-access_token_secret = "1zr5Guity4uffdYKQ9XCfP6M1r1e8VmeLd6y3Cm9wzoBk"
+access_token = "#####"
+access_token_secret = "#####"
 
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_token, access_token_secret)
@@ -333,6 +333,6 @@ def runPull(pullEvent):
     if not pullEvent.is_set():
         threading.Timer(120, runPull, [pullEvent]).start()
 
-# buildTwitterSearchQuery(initialSearchDict)
-# pullEvent = threading.Event()
-# runPull(pullEvent)
+buildTwitterSearchQuery(initialSearchDict)
+pullEvent = threading.Event()
+runPull(pullEvent)
