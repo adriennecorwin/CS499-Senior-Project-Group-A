@@ -1,6 +1,6 @@
 {% load static from staticfiles %}
 <!DOCTYPE html>
- <!-- Team A / Supreme Court Twitter -->
+<!-- Team A / Supreme Court Twitter -->
 
 <html>
 <title>SCOTUS Tweet Database</title>
@@ -15,81 +15,107 @@
     <!-- Compiled and minified CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
     <!-- Compiled and minified JavaScript -->
-  <script type="text/javascript" src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <!--Import Google Icon Font-->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </header>
 
 <style>
-body,h1,h2,h3,h4,h5,h6 {font-family: "Raleway", sans-serif}
+body,h2,h3,h4,h5,h6 {font-family: "Raleway", sans-serif}
+h1, th {font-family: "Helvetica Neue", sans-serif}
 </style>
 
 <body class="w3-light-grey w3-content" style="max-width:1600px">
     <!-- !PAGE CONTENT! -->
     <div class="w3-main">
-        <div class="w3-container">
-            <div class="center grey darken-3 white-text" id="heading">
+        <div class="w3-container center grey darken-3 white-text">
             <h1><img src="{% static 'twitter-logo copy.png' %}" alt="Twitter Logo"><b>SCOTUS Tweet Database</b></h1>
-            </div>
-            <div class="w3-section w3-bottombar w3-padding-16">
-                <form action="" method="GET">{% csrf_token %}
+        </div>
+
+        <div class="w3-section w3-padding-10"></div>
+        <div class="w3-container">
+
+            <form action="" method="GET">{% csrf_token %}
                 <table>
                     <tr>
-                        <th>User</th>
-                        <th>Hashtag</th>
-                        <th>Keyword</th>
-                        <th>From</th>
-                        <th>To</th>
-
-                    </tr>
-                    <tr>
-                        <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="validate" name="users" value="{{ request.GET.users }}"></td>
-                        <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="validate" name="hashtags" value="{{ request.GET.hashtags }}"></td>
-                        <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="validate" name="keywords" value="{{ request.GET.keywords }}"></td>
-                        <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="datepicker" name="from" value="{{ request.GET.from }}"></td>
-                        <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="datepicker" name="to" value="{{ request.GET.to }}"></td>
+                        <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="validate" name="users" value="{{ request.GET.users }}" placeholder="  Users"></td>
+                        <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="validate" name="hashtags" value="{{ request.GET.hashtags }}" placeholder="    Hashtags"></td>
+                        <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="validate" name="keywords" value="{{ request.GET.keywords }}" placeholder="    Keywords"></td>
+                        <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="datepicker" name="from" value="{{ request.GET.from }}" placeholder="  From"></td>
+                        <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="datepicker" name="to" value="{{ request.GET.to }}" placeholder="  To"></td>
 
                         <td><button class="btn-floating waves-effect waves-light btn" type="submit" name="search"><i class="material-icons">search</i></button></td>
-                        <td><a class="btn-floating waves-effect waves-light btn" href="?pull=true"><i class="material-icons">refresh</i></a></td>
-                        <td><a href="#" class="btn-floating waves-effect waves-light btn"><i class="material-icons">file_download</i></a></td>
+                        <td><a class="btn-floating waves-effect waves-light btn" href="?refresh=true"><i class="material-icons">refresh</i></a></td>
+                        <td><a href="#download-modal" class="btn-floating waves-effect waves-light btn modal-trigger"><i class="material-icons">file_download</i></a></td>
                     </tr>
                 </table>
-                </form>
+            </form>
+            <div class="w3-section w3-padding-10"></div>
+
+                {% for tweet in tweets %}
+                    {% if forloop.counter|divisibleby:2 == False %}
+                        <div class="row">
+                    {% endif %}
+                    <div class="col s6">
+                      <div class="card small">
+                        <div class="card-content">
+                          {% if tweet.isRetweet %}
+                            <p>Retweeted by: <a href="http://www.twitter.com/{{ tweet.newUser.username }}" target="_blank">@{{tweet.newUser.username}}</a></p>
+                            {% if tweet.commentText %}
+                                <span class="activator grey-text text-darken-4"><h6>{{tweet.commentText|urlize}}</h6></span>
+                            {% endif %}
+                            <div class="retweet">
+
+                          {% endif %}
+                          <span class="activator grey-text text-darken-4"><h6>{{tweet.originalText|urlize}}</h6><i class="material-icons right">more_vert</i></span>
+                          <a href="http://www.twitter.com/{{ tweet.originalUser.username }}" target="_blank"><h6>- @{{tweet.originalUser.username}} {%if tweet.user.isVerified %}<i class="material-icons">check_circle</i>{% endif %}</h6></a>
+                          {% if tweet.isRetweet %}
+                            </div>
+                          {% endif %}
+                        </div>
+                        <div class="card-reveal">
+                          <span class="card-title grey-text text-darken-4"><i class="material-icons right">close</i></span>
+                          {% if tweet.isRetweet %}
+                            <h6>Retweet</h6>
+                            <div class="more-info">
+                              <h6>{{tweet.createdAt}}</h6>
+                              {% if tweet.newUser.location %}
+                                <h6>Location: {{tweet.newUser.location}}</h6>
+                              {% endif %}
+                              <h6>Retweets: {{tweet.numRetweetsNew}}</h6>
+                              <h6>Favorites: {{tweet.numFavoritesNew}}</h6>
+                              <p>Last updated: {{tweet.lastUpdated }}</p>
+                            </div>
+                            <h6>Original Tweet</h6>
+                          {% endif %}
+                          <div class="more-info">
+                              {% if tweet.isRetweet == False %}
+                                <h6>{{tweet.createdAt}}</h6>
+                              {% endif %}
+                              {% if tweet.originalUser.location %}
+                                <h6>Location: {{tweet.originalUser.location}}</h6>
+                              {% endif %}
+                              <h6>Retweets: {{tweet.numRetweetsOriginal}}</h6>
+                              <h6>Favorites: {{tweet.numFavoritesOriginal}}</h6>
+                              {% if tweet.isRetweet == False %}
+                                <p>Last updated: {{tweet.lastUpdated }}</p>
+                              {% endif %}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {% if forloop.counter|divisibleby:2 %}
+                        </div>
+                    {% endif %}
+                {% endfor %}
             </div>
         </div>
-        {% for tweet in tweets %}
-            {% if forloop.counter|divisibleby:2 == False%}
-                <div class="row">
-            {% endif %}
-                <div class="col s6">
-                  <div class="card small">
-                    <div class="card-content">
-                      <span class="card-title activator grey-text text-darken-4">{{tweet.originalText}}<i class="material-icons right">more_vert</i></span>
-                      <h5>- @{{tweet.user.username}} {%if tweet.user.isVerified %}<i class="material-icons">check_circle</i>{% endif %}</h5>
-                    </div>
-                    <div class="card-reveal">
-                      <span class="card-title grey-text text-darken-4"><i class="material-icons right">close</i></span>
-                      <h5>{{tweet.createdAt}}</h5>
-                      <h5>{{tweet.user.location}}</h5>
-                      <h5>Retweets: {{tweet.numRetweetsOriginal}}</h5>
-                      <h5>Favorites: {{tweet.numFavoritesOriginal}}</h5>
-                        {% load tz %}
-                        {% localtime on %}
-                      <p>Last updated: {{tweet.lastUpdated}}</p><p/>
-                        {% endlocaltime %}
-                    </div>
-                  </div>
-                </div>
-            {% if forloop.counter|divisibleby:2 %}
-                </div>
-            {% endif %}
-        {% endfor %}
     </div>
 </body>
 
 <div class="row">
-    <a id="change-query-btn" class="btn-floating btn-large waves-effect waves-light red modal-trigger right" href="#modal1"><i class="material-icons">build</i></a>
+    <a id="change-query-btn" class="btn-floating btn-large waves-effect waves-light red modal-trigger right" href="#change-query-modal"><i class="material-icons">build</i></a>
 </div>
 
 <div class="pagination row container">
@@ -126,7 +152,24 @@ body,h1,h2,h3,h4,h5,h6 {font-family: "Raleway", sans-serif}
 
 
 <!-- Modal Structure -->
-<div id="modal1" class="modal bottom-sheet">
+<div id="download-modal" class="modal">
+    <div class="modal-content">
+        <h4>Choose File Name</h4>
+        <div class="row">
+            <form class="col s12" action="" method="GET">{% csrf_token %}
+                <div class="row">
+                    <input id="csv-name" name="csv-name" type="text" class="validate" value="tweets_{{ tweets.0.createdAt|date:'mdY' }}{{ tweets.0.createdAt|time:'HM' }}_{% with tweets|last as last %}{{ last.createdAt|date:'mdY' }}{% endwith %}">
+                    <label for="csv-name">File Name</label>
+                </div>
+                <div class="row">
+                    <button class="waves-effect waves-light btn right" type="submit" name="download"><i class="material-icons">file_download</i></button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="change-query-modal" class="modal bottom-sheet">
     <div class="modal-content">
       <h4>Search Twitter By</h4>
         <div class="row">
@@ -161,7 +204,7 @@ body,h1,h2,h3,h4,h5,h6 {font-family: "Raleway", sans-serif}
                   <label for="pull-until">Until</label>
                 </div>
               </div>
-                <input class="waves-effect waves-light btn" type="submit" name ="change" value="Change">
+                <input class="waves-effect waves-light btn" type="submit" name="change" value="Change">
             </form>
         </div>
     </div>
@@ -173,22 +216,35 @@ body,h1,h2,h3,h4,h5,h6 {font-family: "Raleway", sans-serif}
         $('.datepicker').datepicker();
     });
 </script>
+
 <style>
     .card {
-        margin-left: 20px;
-        margin-right: 20px;
+        border-radius: 30px;
     }
+
+    .more-info {
+        margin-top: 25px;
+        margin-bottom: 25px;
+        padding: 20px;
+        border-style: solid;
+        border-width: thin;
+        border-radius: 30px;
+        border-color: #9e9e9e;
+    }
+
     #change-query-btn {
         margin-right: 40px;
     }
-    #heading {
-        border-radius: 25px;
+
+    .retweet {
+        margin-top: 15px;
+        padding: 15px;
+        border-style: solid;
+        border-width: thin;
+        border-radius: 30px;
+        border-color: #9e9e9e;
     }
 
-    .scroll-box {
-        overflow-y: scroll;
-        padding: 1rem
-    }
     .pagination {
         text-align: center;
         margin-top: 1em;
@@ -216,8 +272,14 @@ body,h1,h2,h3,h4,h5,h6 {font-family: "Raleway", sans-serif}
     .pagination-action:hover, .pagination-previous, .pagination-next {
         color: #3354AA;
     }
+
     img {
         height: 10%;
         width: 10%;
     }
+
+    .modal {
+        border-radius:30px;
+    }
+
 </style>
