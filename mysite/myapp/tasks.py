@@ -8,7 +8,7 @@ from .models import UrlLog
 from datetime import datetime, timedelta
 from django.utils import timezone
 import pytz
-import threading
+from threading import Thread
 
 import tweepy
 
@@ -24,14 +24,16 @@ api = tweepy.API(auth)
 
 #initial twitter search criteria
 initialSearchDict = {}
-initialSearchDict['hashtags'] = ["scotus", 'supremecourt', 'ussc', 'chiefjustice']
+initialSearchDict['hashtags'] = ["scotus", 'supremecourt', 'ussc', 'chiefjustice', 'billofrights', 'constitution', 'ussupremecourt', 'highcourt', 'abortion']
 initialSearchDict['andHashtags'] = False
-initialSearchDict['accounts'] = ['stevenmazie', 'JeffreyToobin', 'DCCIR']
+initialSearchDict['accounts'] = ['stevenmazie', 'JeffreyToobin', 'DCCIR', 'GregStohr', 'AlisonFrankel']
 initialSearchDict['notAccounts'] = ['John_Scotus', 'ScotusCC']
 initialSearchDict['fromDate'] = datetime.strftime(timezone.now() - timedelta(1), '%Y-%m-%d')
 initialSearchDict['toDate'] = datetime.strftime(timezone.now(), '%Y-%m-%d')
 initialSearchDict['keywords'] = []
+
 twitterSearchQueries = []
+done = True #true if gone through all results from search request, else false
 
 # builds queries for twitter search api based on input dictionary
 # input:search dict
@@ -39,7 +41,6 @@ twitterSearchQueries = []
 def buildTwitterSearchQuery(searchDict):
     global twitterSearchQueries #global so that the pull function always uses the most up to date queries
     twitterSearchQueries = []
-
     #build query for keywords
     keywordQuery = ""
     for i in range(len(searchDict['keywords'])):
@@ -96,6 +97,7 @@ def buildTwitterSearchQuery(searchDict):
         for i in range(len(twitterSearchQueries)):
             twitterSearchQueries[i] += toDateQuery
 
+
 # retrieves and stores only relevant information from tweepy tweet responses
 # input: tweepy response from search api call
 # output: list of all tweets from response stored as dictionaries with only relevant information about the tweet
@@ -121,6 +123,7 @@ def parseTwitterResponse(response):
         newLocation = None
         newVerified = None
 
+        #if tweet is a retweet
         if hasattr(t, 'retweeted_status'):
             isRetweet = True
             originalText = t.retweeted_status.full_text
@@ -140,6 +143,7 @@ def parseTwitterResponse(response):
             newLocation = t.user.location
             newVerified = t.user.verified
 
+        #if tweet is quote tweet
         elif hasattr(t, 'quoted_status'):
             isRetweet = True
             originalText = t.quoted_status.full_text
@@ -202,20 +206,6 @@ def parseTwitterResponse(response):
 
     return tweets
 
-# uses tweepy to make twitter api search request
-# input: None
-# output: list of distinct tweet dictionaries from api response
-def searchTwitter():
-    global twitterSearchQueries, api
-    allSearchResults = []
-    print("search:", twitterSearchQueries)
-    for query in twitterSearchQueries:
-        response = api.search(q=query, count=25, tweet_mode='extended')
-        tweets = parseTwitterResponse(response)
-        for tweetDict in [i for n, i in enumerate(tweets) if i not in tweets[n + 1:]]:
-            allSearchResults.append(tweetDict)
-    return allSearchResults
-
 # inserts tweet into db
 # input: tweet dictionary
 # output: None
@@ -241,7 +231,7 @@ def insert(tweet):
                 newUser = User.objects.filter(username=tweet['newUsername'])[0]
 
     #if hashtag not already in db, add it to db
-    # TODO: make case insensitive
+    # TODO: make case insensitive??
     hashtags = []
     for h in tweet['hashtags']:
         if not Hashtag.objects.filter(hashtagText=h).exists():
@@ -307,6 +297,8 @@ def update(oldTweet, newTweet):
 # output: None
 def addToDatabase(tweets):
     for tweet in tweets:
+
+        #if tweet is retweet exists in db or original tweet exists in db, update it in the db
         if tweet['newUsername']:
             if Tweet.objects.filter(newUser__username=tweet['newUsername'], createdAt=tweet['createdAt']).exists():
                 t = Tweet.objects.get(newUser__username=tweet['newUsername'], createdAt=tweet['createdAt'])
@@ -314,25 +306,51 @@ def addToDatabase(tweets):
         elif Tweet.objects.filter(originalUser__username=tweet['originalUsername'], createdAt=tweet['createdAt']).exists():
             t = Tweet.objects.get(originalUser__username=tweet['originalUsername'], createdAt=tweet['createdAt'])
             update(t, tweet)
+
+        #otherwise (neither exist in db) add to db
         else:
             insert(tweet)
+
+# for each search query, uses tweepy to make twitter api search request,
+# goes through all pages of result, and adds results to db appropriately
+# input: None
+# output: None
+def searchTwitter():
+    global twitterSearchQueries, api, bigQuery, done
+    done = False
+    # print("search:", twitterSearchQueries)
+    for query in twitterSearchQueries:
+        #iterate through every page (pause if hit rate limit)
+        for page in tweepy.Cursor(api.search, q=query, count=100, tweet_mode='extended', wait_on_rate_limit=True, wait_on_rate_limit_notify=True).pages():
+            searchResults = []
+            #parse relevant information from response
+            tweets = parseTwitterResponse(page)
+            for tweetDict in [i for n, i in enumerate(tweets) if i not in tweets[n + 1:]]: #only add unique tweet to results
+                searchResults.append(tweetDict)
+            addToDatabase(searchResults) #add results to db for every page so that db gets updated with new tweets to display often
+    done = True
 
 # pulls relevant tweets from twitter by searching twitter and adding results to db (runs as bg task)
 # input: None
 # output: None
 def pull():
-    searchResults = searchTwitter()
-    addToDatabase(searchResults)
-    print("pulled")
+    import time
+    global done
 
-#https://stackoverflow.com/questions/2223157/how-to-execute-a-function-asynchronously-every-60-seconds-in-python/2223182
-# runs pull function as bg task every 120 seconds (2 minutes)
-def runPull(pullEvent):
-    print("pulling")
-    pull()
-    if not pullEvent.is_set():
-        threading.Timer(120, runPull, [pullEvent]).start()
+    #continuously try to pull new tweets
+    while True:
+        #if done getting all results from a search request
+        if done:
+            print("pulling")
+            #execute search request again
+            searchTwitter()
+            print("pulled")
+        #if not done getting all search results, wait 1 minute and then try again
+        else:
+            time.sleep(60)
 
+#start pulling tweets initially with initial search dictionary parameters
 buildTwitterSearchQuery(initialSearchDict)
-pullEvent = threading.Event()
-runPull(pullEvent)
+
+pullThread = Thread(target=pull) #pull tweets asynchronously so that main thread isn't blocked
+pullThread.start()

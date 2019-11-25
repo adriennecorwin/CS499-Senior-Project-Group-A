@@ -12,11 +12,12 @@
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <!-- Compiled and minified CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
     <!-- Compiled and minified JavaScript -->
     <script type="text/javascript" src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <!-- Compiled and minified CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
     <!--Import Google Icon Font-->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </header>
@@ -35,22 +36,28 @@ h1, th {font-family: "Helvetica Neue", sans-serif}
 
         <div class="w3-section w3-padding-10"></div>
         <div class="w3-container">
-
+            <!-- !SEARCH! -->
             <form action="" method="GET">{% csrf_token %}
                 <table>
                     <tr>
-                        <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="validate" name="users" value="{{ request.GET.users }}" placeholder="  Users"></td>
-                        <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="validate" name="hashtags" value="{{ request.GET.hashtags }}" placeholder="    Hashtags"></td>
-                        <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="validate" name="keywords" value="{{ request.GET.keywords }}" placeholder="    Keywords"></td>
-                        <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="datepicker" name="from" value="{{ request.GET.from }}" placeholder="  From"></td>
-                        <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="datepicker" name="to" value="{{ request.GET.to }}" placeholder="  To"></td>
+                       <td>
+                            <p><label><input value="OR" class="with-gap" name="ANDOR" type="radio"  {% if request.GET.ANDOR == "OR" or request.GET.ANDOR == None %} checked {% endif %}/><span>OR</span></label></p>
+                            <p><label><input value="AND" class="with-gap" name="ANDOR" type="radio" {% if request.GET.ANDOR == "AND" %} checked {% endif %}/><span>AND</span></label></p>
+                       </td>
+                       <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="validate" name="users" {% if downloaded == False %}value="{{ request.GET.users }}"{% else %}value="{{ dbSearchDict.users }}"{% endif %} placeholder="  Users"></td>
+                       <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="validate" name="hashtags" {% if downloaded == False %}value="{{ request.GET.hashtags }}"{% else %}value="{{ dbSearchDict.hashtags }}"{% endif %} placeholder="    Hashtags"></td>
+                       <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="validate" name="keywords" {% if downloaded == False %}value="{{ request.GET.keywords }}"{% else %}value="{{ dbSearchDict.keywords }}"{% endif %} placeholder="    Keywords"></td>
+                       <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="datepicker" name="from" {% if downloaded == False %}value="{{ request.GET.from }}"{% else %}value="{{ dbSearchDict.from }}"{% endif %} placeholder="  From"></td>
+                       <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="datepicker" name="to" {% if downloaded == False %}value="{{ request.GET.to }}"{% else %}value="{{ dbSearchDict.to }}"{% endif %} placeholder="  To"></td>
 
-                        <td><button class="btn-floating waves-effect waves-light btn" type="submit" name="search"><i class="material-icons">search</i></button></td>
-                        <td><a class="btn-floating waves-effect waves-light btn" href="?refresh=true"><i class="material-icons">refresh</i></a></td>
-                        <td><a href="#download-modal" class="btn-floating waves-effect waves-light btn modal-trigger"><i class="material-icons">file_download</i></a></td>
+                       <td><button class="btn-floating waves-effect waves-light btn" type="submit" name="search"><i class="material-icons">search</i></button></td>
+                       <td><a class="btn-floating waves-effect waves-light btn" href="?refresh=true"><i class="material-icons">refresh</i></a></td>
+                       <td><a href="#download-modal" class="btn-floating waves-effect waves-light btn modal-trigger"><i class="material-icons">file_download</i></a></td>
                     </tr>
                 </table>
             </form>
+
+            <!--!DISPLAY TWEETS!-->
             <div class="w3-section w3-padding-10"></div>
 
                 {% for tweet in tweets %}
@@ -114,10 +121,12 @@ h1, th {font-family: "Helvetica Neue", sans-serif}
     </div>
 </body>
 
+<!-- change twitter search button-->
 <div class="row">
     <a id="change-query-btn" class="btn-floating btn-large waves-effect waves-light red modal-trigger right" href="#change-query-modal"><i class="material-icons">build</i></a>
 </div>
 
+<!-- pagination -->
 <div class="pagination row container">
 
   {% if tweets.has_previous %}
@@ -151,7 +160,7 @@ h1, th {font-family: "Helvetica Neue", sans-serif}
 </div>
 
 
-<!-- Modal Structure -->
+<!-- choose download filename modal -->
 <div id="download-modal" class="modal">
     <div class="modal-content">
         <h4>Choose File Name</h4>
@@ -169,42 +178,64 @@ h1, th {font-family: "Helvetica Neue", sans-serif}
     </div>
 </div>
 
+<!-- change twitter search query modal -->
 <div id="change-query-modal" class="modal bottom-sheet">
     <div class="modal-content">
-      <h4>Search Twitter By</h4>
+      <h4 class="center">Search Twitter By</h4>
         <div class="row">
             <form class="col s12" action="changeQuery/" method="GET">{% csrf_token %}
               <div class="row">
                 <div class="input-field col s6">
-                  <input id="pull-users" name="pull-users" type="text" class="validate">
+                  <input id="pull-users" name="pull-users" type="text" class="validate" value="{{ twitterSearchDict.usersString }}">
                   <label for="pull-users">Users</label>
                 </div>
                 <div class="input-field col s6">
-                  <input id="pull-not-users" name="pull-not-users" type="text" class="validate">
+                  <input id="pull-not-users" name="pull-not-users" type="text" class="validate" value="{{ twitterSearchDict.notUsersString }}">
                   <label for="pull-not-users">Unwanted Users</label>
                 </div>
               </div>
               <div class="row">
                 <div class="input-field col s6">
-                  <input id="pull-hashtags" name="pull-hashtags" type="text" class="validate">
+                  <input id="pull-hashtags" name="pull-hashtags" type="text" class="validate" value="{{ twitterSearchDict.hashtagsString }}">
                   <label for="pull-hashtags">Hashtags</label>
                 </div>
                 <div class="input-field col s6">
-                  <input id="pull-keywords" name="pull-keywords" type="text" class="validate">
+                  <input id="pull-keywords" name="pull-keywords" type="text" class="validate" value="{{ twitterSearchDict.keywordsString }}">
                   <label for="pull-keywords">Keywords</label>
                 </div>
               </div>
               <div class="row">
                 <div class="input-field col s6">
-                  <input id="pull-since" name="pull-since" type="text" class="datepicker">
-                  <label for="pull-since">Since</label>
+                    <select name="pull-since">
+                      <option {% if twitterSearchDict.fromDateVal == 0 %} selected="selected" {% endif %} value="0">Today</option>
+                      <option {% if twitterSearchDict.fromDateVal == 1 %} selected="selected" {% endif %} value="1">One Day Ago</option>
+                      <option {% if twitterSearchDict.fromDateVal == 2 %} selected="selected" {% endif %} value="2">Two Days Ago</option>
+                      <option {% if twitterSearchDict.fromDateVal == 3 %} selected="selected" {% endif %} value="3">Three Days Ago</option>
+                      <option {% if twitterSearchDict.fromDateVal == 4 %} selected="selected" {% endif %} value="4">Four Days Ago</option>
+                      <option {% if twitterSearchDict.fromDateVal == 5 %} selected="selected" {% endif %} value="5">Five Days Ago</option>
+                      <option {% if twitterSearchDict.fromDateVal == 6 %} selected="selected" {% endif %} value="6">Six Days Ago</option>
+                      <option {% if twitterSearchDict.fromDateVal == 7 %} selected="selected" {% endif %} value="7">Seven Days Ago</option>
+                    </select>
+                    <label>From (Inclusive)</label>
                 </div>
                 <div class="input-field col s6">
-                  <input id="pull-until" name="pull-until" type="text" class="datepicker">
-                  <label for="pull-until">Until</label>
+                    <select name="pull-until">
+                      <option {% if twitterSearchDict.toDateVal == 0 %} selected="selected" {% endif %} value="0">Today</option>
+                      <option {% if twitterSearchDict.toDateVal == -1 %} selected="selected" {% endif %} value="-1">Tomorrow</option>
+                      <option {% if twitterSearchDict.toDateVal == 1 %} selected="selected" {% endif %} value="1">One Day Ago</option>
+                      <option {% if twitterSearchDict.toDateVal == 2 %} selected="selected" {% endif %} value="2">Two Days Ago</option>
+                      <option {% if twitterSearchDict.toDateVal == 3 %} selected="selected" {% endif %} value="3">Three Days Ago</option>
+                      <option {% if twitterSearchDict.toDateVal == 4 %} selected="selected" {% endif %} value="4">Four Days Ago</option>
+                      <option {% if twitterSearchDict.toDateVal == 5 %} selected="selected" {% endif %} value="5">Five Days Ago</option>
+                      <option {% if twitterSearchDict.toDateVal == 6 %} selected="selected" {% endif %} value="6">Six Days Ago</option>
+                      <option {% if twitterSearchDict.toDateVal == 7 %} selected="selected" {% endif %} value="7">Seven Days Ago</option>
+
+                    </select>
+                    <label>To (Exclusive)</label>
                 </div>
               </div>
-                <input class="waves-effect waves-light btn" type="submit" name="change" value="Change">
+                <p class="fine-print">**In order to yield any tweet results: 1) At least one of users, hashtags, or keywords fields must have be filled 2) From and To dates must be different
+                <button class="waves-effect waves-light btn right" type="submit" name="change"><i class="material-icons">done</i></button> </p>
             </form>
         </div>
     </div>
@@ -214,14 +245,27 @@ h1, th {font-family: "Helvetica Neue", sans-serif}
     $(document).ready(function(){
         $('.modal').modal();
         $('.datepicker').datepicker();
+        $('select').formSelect();
+        $('.collapsible').collapsible();
+        $('.tabs').tabs();
     });
 
     if("{{downloaded}}" == "True"){
-        M.toast({html: 'Downloaded!'}, 'white')
+        M.toast({html: 'Downloaded!'}, 'white');
+    }
+    if("{{changeQueryError}}"){
+        $('#change-query-modal').modal('open');
+        alert("{{changeQueryError}}");
     }
 </script>
 
 <style>
+    .collapsible {
+        border-radius: 30px;
+    }
+    .collapsible-header {
+        border-radius: 30px;
+    }
     .card {
         border-radius: 30px;
     }
@@ -238,6 +282,12 @@ h1, th {font-family: "Helvetica Neue", sans-serif}
 
     #change-query-btn {
         margin-right: 40px;
+    }
+
+    .fine-print {
+        font-size: 10px;
+        color: red;
+
     }
 
     .retweet {
@@ -284,6 +334,11 @@ h1, th {font-family: "Helvetica Neue", sans-serif}
 
     .modal {
         border-radius:30px;
+    }
+
+    .modal.bottom-sheet {
+        max-height: 100% !important;
+        overflow-y: visible;
     }
 
     .toast {
