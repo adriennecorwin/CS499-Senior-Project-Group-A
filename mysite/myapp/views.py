@@ -9,7 +9,7 @@ from .models import Tweet
 from .models import HashtagLog
 from .models import UrlLog
 
-from .tasks import buildTwitterSearchQuery, initialSearchDict
+from .tasks import buildTwitterSearchQuery, pullParameters, getPullParametersAsStrings
 from django.db.models import Q
 from datetime import datetime, timedelta
 import pytz
@@ -17,60 +17,28 @@ import csv
 import textstat
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from django.utils import timezone
+from django.contrib.auth import login, authenticate
+from django.shortcuts import redirect
+
+from django.contrib.sites.shortcuts import get_current_site
+from django.utils.encoding import force_bytes, force_text
+from django.utils.http import urlsafe_base64_encode
+from django.template.loader import render_to_string
+from .forms import SignUpForm
+from .tokens import account_activation_token
+
+from django.contrib.auth.models import User as profile
+from django.utils.http import urlsafe_base64_decode
 import os
 
 currentTwitterSearchDict = {} #dictionary with parameters to search twitter by in array form
-pullParameters = {} #dictionary with parameters to search twitter by in string form (to display in website)
 tweetsList = [] #list of tweets to dispaly on website
 dbSearchDict = {}
 
-# convert the array value of a given dictionary key to a string with elements separated by spaces
-# input:dictionary and key in dictionary that should be converted
-# output: the string
-def searchListToString(d, key):
-    string = ""
-    for i in range(len(d[key])):
-        if i == len(d[key]) - 1:
-            string += d[key][i]
-        else:
-            string += d[key][i] + " "
-    return string
-
-# set the pull parameters dictionary (to display on website)
-# input: a search dictionary of paramters to search twitter by
-# output: none
-def getPullParametersAsStrings(searchDict):
-    global pullParameters
-
-    #get number of days between today and given from date
-    if searchDict["fromDate"] != "":
-        delta = timezone.now()-datetime.strptime(searchDict["fromDate"], '%Y-%m-%d').replace(tzinfo=pytz.UTC)
-        fromDateVal = delta.days
-    else:
-        fromDateVal = 0
-
-    #get number of days between today and given to date
-    if searchDict["toDate"] != "":
-        delta = timezone.now()-datetime.strptime(searchDict["toDate"], '%Y-%m-%d').replace(tzinfo=pytz.UTC)
-        toDateVal = delta.days
-    else:
-        toDateVal = 0
-
-    #set dictionary to string conversions of dict array values (and # days between today and from/to dates)
-    pullParameters = {
-        "usersString": searchListToString(searchDict, "accounts"),
-        "notUsersString": searchListToString(searchDict, "notAccounts"),
-        "hashtagsString": searchListToString(searchDict, "hashtags"),
-        "keywordsString": searchListToString(searchDict, "keywords"),
-        "fromDateVal": fromDateVal,
-        "toDateVal": toDateVal,
-    }
-
-#set initial pullParameters dictionary
-getPullParametersAsStrings(initialSearchDict)
-
 # home page controller
 def index(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
     global currentTwitterSearchDict, tweetsList
 
     #get what users entered into search bars (so we can redisplay them in the search bars when a download occurs)
@@ -222,8 +190,8 @@ def setTwitterSearchQuery(request):
     currentTwitterSearchDict['andKeywords'] = False
 
     #set twitter search query and string
-    buildTwitterSearchQuery(currentTwitterSearchDict)
     getPullParametersAsStrings(currentTwitterSearchDict)
+    buildTwitterSearchQuery(currentTwitterSearchDict)
 
     return redirect('/')
 
@@ -269,7 +237,8 @@ def download(csvName):
                       'combined fog scale', 'combined smog index', 'combined automated readability index', 'combined coleman-liau index',
                       'combined linsear write level', 'combined dale-chall readability score', 'combined difficult words',
                       'combined readability consensus', 'combined neg sentiment', 'combined neu sentiment', 'combined pos sentiment',
-                      'combined overall sentiment']
+                      'combined overall sentiment', 'twitter users query', 'twitter excluded users query', 'twitter hashtags query', 'twitter keywords query',
+                      'twitter from date query', 'twitter to date query']
 
         writer = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         writer.writerow(fieldnames)
@@ -416,6 +385,47 @@ def download(csvName):
                  textstat.difficult_words(tweet.originalText + commentText),
                  textstat.text_standard(tweet.originalText + commentText, float_output=False),
                  sentiment_dict_combined['neg'], sentiment_dict_combined['neu'],
-                 sentiment_dict_combined['pos'], sentiment_dict_combined['compound']
-                 ]
+                 sentiment_dict_combined['pos'], sentiment_dict_combined['compound'],
+                 pullParameters['usersString'], pullParameters['notUsersString'],
+                 pullParameters['hashtagsString'], pullParameters['keywordsString'],
+                 pullParameters['fromDateString'], pullParameters['toDateString']]
             )
+
+def activate(request, uidb64, token):
+    try:
+        uid = force_text(urlsafe_base64_decode(uidb64))
+        user = profile.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, profile.DoesNotExist):
+        user = None
+
+    if user is not None and account_activation_token.check_token(user, token):
+        user.is_active = True
+        user.profile.email_confirmed = True
+        user.save()
+        login(request, user)
+        return redirect('home')
+    else:
+        return render(request, 'account_activation_invalid.html')
+
+def signup(request):
+    #TODO:page after signing up telling user that they need to wait until admin lets them in
+    if request.method == 'POST':
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.is_active = False
+            user.save()
+            current_site = get_current_site(request)
+            subject = 'Activate Your SCOTUS Twitter Website Account'
+            message = render_to_string('account_activation_email.html', {
+                'user': user,
+                'domain': current_site.domain,
+                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                'token': account_activation_token.make_token(user),
+            })
+
+            user.email_user(subject, message, from_email=None)
+            return redirect('home')
+    else:
+        form = SignUpForm()
+    return render(request, 'signup.html', {'form': form})

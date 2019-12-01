@@ -1,36 +1,22 @@
+{% extends 'base.html' %}
+{% block content %}
 {% load static from staticfiles %}
-<!DOCTYPE html>
-<!-- Team A / Supreme Court Twitter -->
 
-<html>
 <title>SCOTUS Tweet Database</title>
-
-<!-- Header -->
-<header id="portfolio">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <!-- Compiled and minified JavaScript -->
-    <script type="text/javascript" src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-    <!-- Compiled and minified CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
-
-    <!--Import Google Icon Font-->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-</header>
 
 <style>
 body,h2,h3,h4,h5,h6 {font-family: "Raleway", sans-serif}
 h1, th {font-family: "Helvetica Neue", sans-serif}
 </style>
 
+<!--<p><a class="waves-effect waves-light btn" href="{% url 'login' %}">Login</a>-->
+<!--<a class="waves-effect waves-light btn" href="{% url 'signup' %}">Sign up</a></p>-->
+
 <body class="w3-light-grey w3-content" style="max-width:1600px">
     <!-- !PAGE CONTENT! -->
     <div class="w3-main">
         <div class="w3-container center grey darken-3 white-text">
+            <a class="right white-text" style="padding-top:10px; font-family: Helvetica Neue, sans-serif" href="{% url 'logout' %}">Logout</a>
             <h1><img src="{% static 'twitter-logo copy.png' %}" alt="Twitter Logo"><b>SCOTUS Tweet Database</b></h1>
         </div>
 
@@ -121,10 +107,12 @@ h1, th {font-family: "Helvetica Neue", sans-serif}
     </div>
 </body>
 
+{% if user.is_superuser %}
 <!-- change twitter search button-->
 <div class="row">
     <a id="change-query-btn" class="btn-floating btn-large waves-effect waves-light red modal-trigger right" href="#change-query-modal"><i class="material-icons">build</i></a>
 </div>
+{% endif %}
 
 <!-- pagination -->
 <div class="pagination row container">
@@ -260,12 +248,6 @@ h1, th {font-family: "Helvetica Neue", sans-serif}
 </script>
 
 <style>
-    .collapsible {
-        border-radius: 30px;
-    }
-    .collapsible-header {
-        border-radius: 30px;
-    }
     .card {
         border-radius: 30px;
     }
@@ -345,5 +327,6 @@ h1, th {font-family: "Helvetica Neue", sans-serif}
         background-color: #ffffff;
         color: #000000
     }
-
 </style>
+
+{% endblock %}

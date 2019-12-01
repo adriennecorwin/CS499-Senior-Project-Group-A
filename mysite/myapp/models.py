@@ -2,6 +2,20 @@
 from __future__ import unicode_literals
 
 from django.db import models
+from django.contrib.auth.models import User as account
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+class Profile(models.Model):
+    user = models.OneToOneField(account, on_delete=models.CASCADE)
+    email_confirmed = models.BooleanField(default=False)
+    # other fields...
+
+@receiver(post_save, sender=account)
+def update_user_profile(sender, instance, created, **kwargs):
+    if created:
+        Profile.objects.create(user=instance)
+    instance.profile.save()
 
 
 # Create your models here.
@@ -36,6 +50,12 @@ class Tweet(models.Model):
     numFavoritesOriginal = models.IntegerField()
     numFavoritesNew = models.IntegerField(null=True)
     lastUpdated = models.DateTimeField()
+    twitterQueryUsers = models.TextField(max_length=5000)
+    twitterQueryNotUsers = models.TextField(max_length=5000)
+    twitterQueryHashtags = models.TextField(max_length=5000)
+    twitterQueryKeywords = models.TextField(max_length=5000)
+    twitterQueryFromDate = models.TextField(max_length=5000)
+    twitterQueryToDate = models.TextField(max_length=5000)
 
 class HashtagLog(models.Model):
     tweet = models.ForeignKey(Tweet, on_delete=models.CASCADE)

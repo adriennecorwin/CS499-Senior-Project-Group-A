@@ -12,11 +12,11 @@ from threading import Thread
 
 import tweepy
 
-consumer_key = "#####"
-consumer_secret = "#####"
+consumer_key = "065p3Ddh3T1rxoAbhsNQKTT0r"
+consumer_secret = "qHTYc1aLUfVFCezVLz1U0yPphthRM0DevNL2AKSxG4LTrzWiWA"
 
-access_token = "#####"
-access_token_secret = "#####"
+access_token = "1176877630382985217-qFO9wveUf0LycpO8cP23ISSVMr1U3g"
+access_token_secret = "1zr5Guity4uffdYKQ9XCfP6M1r1e8VmeLd6y3Cm9wzoBk"
 
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_token, access_token_secret)
@@ -33,7 +33,65 @@ initialSearchDict['toDate'] = datetime.strftime(timezone.now(), '%Y-%m-%d')
 initialSearchDict['keywords'] = []
 
 twitterSearchQueries = []
+pullParameters = {} #dictionary with parameters to search twitter by in string form (to display in website)
 done = True #true if gone through all results from search request, else false
+
+# convert the array value of a given dictionary key to a string with elements separated by spaces
+# input:dictionary and key in dictionary that should be converted
+# output: the string
+def searchListToString(d, key):
+    string = ""
+    for i in range(len(d[key])):
+        if i == len(d[key]) - 1:
+            string += d[key][i]
+        else:
+            string += d[key][i] + " "
+    return string
+
+# set the pull parameters dictionary (to display on website)
+# input: a search dictionary of paramters to search twitter by
+# output: none
+def getPullParametersAsStrings(searchDict):
+    global pullParameters
+
+    #get number of days between today and given from date
+    if searchDict["fromDate"] != "":
+        delta = timezone.now()-datetime.strptime(searchDict["fromDate"], '%Y-%m-%d').replace(tzinfo=pytz.UTC)
+        fromDateVal = delta.days
+        if fromDateVal > 0:
+            fromDateString = str(fromDateVal) + " days ago"
+        elif fromDateVal == 0:
+            fromDateString = "Today"
+    else:
+        fromDateVal = 0
+        fromDateString = ""
+
+
+    #get number of days between today and given to date
+    if searchDict["toDate"] != "":
+        delta = timezone.now()-datetime.strptime(searchDict["toDate"], '%Y-%m-%d').replace(tzinfo=pytz.UTC)
+        toDateVal = delta.days
+        if toDateVal > 0:
+            toDateString = str(toDateVal) + " days ago"
+        elif toDateVal == 0:
+            toDateString = "Today"
+        else:
+            toDateString = "Tomorrow"
+    else:
+        toDateVal = 0
+        toDateString = ""
+
+    #set dictionary to string conversions of dict array values (and # days between today and from/to dates)
+    pullParameters = {
+        "usersString": searchListToString(searchDict, "accounts"),
+        "notUsersString": searchListToString(searchDict, "notAccounts"),
+        "hashtagsString": searchListToString(searchDict, "hashtags"),
+        "keywordsString": searchListToString(searchDict, "keywords"),
+        "fromDateVal": fromDateVal,
+        "toDateVal": toDateVal,
+        "fromDateString": fromDateString,
+        "toDateString": toDateString
+    }
 
 # builds queries for twitter search api based on input dictionary
 # input:search dict
@@ -96,7 +154,6 @@ def buildTwitterSearchQuery(searchDict):
         toDateQuery = " until:" + searchDict['toDate']
         for i in range(len(twitterSearchQueries)):
             twitterSearchQueries[i] += toDateQuery
-
 
 # retrieves and stores only relevant information from tweepy tweet responses
 # input: tweepy response from search api call
@@ -255,7 +312,9 @@ def insert(tweet):
     t = Tweet(originalUser=originalUser, newUser=newUser, createdAt=tweet['createdAt'], isRetweet=tweet['isRetweet'], originalText=tweet['originalText'],
               commentText=tweet['commentText'], numRetweetsOriginal=tweet['numRetweetsOriginal'],
               numRetweetsNew=tweet['numRetweetsNew'], numFavoritesOriginal=tweet['numFavoritesOriginal'],
-              numFavoritesNew=tweet['numFavoritesNew'], lastUpdated=timezone.now().strftime("%Y-%m-%d %H:%M"))
+              numFavoritesNew=tweet['numFavoritesNew'], lastUpdated=timezone.now().strftime("%Y-%m-%d %H:%M"), twitterQueryUsers=pullParameters['usersString'],
+              twitterQueryNotUsers=pullParameters['notUsersString'], twitterQueryHashtags=pullParameters['hashtagsString'], twitterQueryKeywords=pullParameters['keywordsString'],
+              twitterQueryFromDate=pullParameters['fromDateString'], twitterQueryToDate=pullParameters['toDateString'])
 
     t.save()
 
@@ -350,7 +409,8 @@ def pull():
             time.sleep(60)
 
 #start pulling tweets initially with initial search dictionary parameters
+getPullParametersAsStrings(initialSearchDict)
 buildTwitterSearchQuery(initialSearchDict)
-
-pullThread = Thread(target=pull) #pull tweets asynchronously so that main thread isn't blocked
-pullThread.start()
+#
+# pullThread = Thread(target=pull) #pull tweets asynchronously so that main thread isn't blocked
+# pullThread.start()
