@@ -52,8 +52,6 @@ def searchListToString(d, key):
 # input: a search dictionary of paramters to search twitter by
 # output: none
 def getPullParametersAsStrings(searchDict):
-    global pullParameters
-
     #get number of days between today and given from date
     if searchDict["fromDate"] != "":
         delta = timezone.now()-datetime.strptime(searchDict["fromDate"], '%Y-%m-%d').replace(tzinfo=pytz.UTC)
@@ -82,7 +80,7 @@ def getPullParametersAsStrings(searchDict):
         toDateString = ""
 
     #set dictionary to string conversions of dict array values (and # days between today and from/to dates)
-    pullParameters = {
+    return {
         "usersString": searchListToString(searchDict, "accounts"),
         "notUsersString": searchListToString(searchDict, "notAccounts"),
         "hashtagsString": searchListToString(searchDict, "hashtags"),
@@ -98,6 +96,8 @@ def getPullParametersAsStrings(searchDict):
 # output: None
 def buildTwitterSearchQuery(searchDict):
     global twitterSearchQueries #global so that the pull function always uses the most up to date queries
+    global done
+    global pullParameters
     twitterSearchQueries = []
     #build query for keywords
     keywordQuery = ""
@@ -154,6 +154,9 @@ def buildTwitterSearchQuery(searchDict):
         toDateQuery = " until:" + searchDict['toDate']
         for i in range(len(twitterSearchQueries)):
             twitterSearchQueries[i] += toDateQuery
+
+    pullParameters = getPullParametersAsStrings(searchDict)
+    done = True #so new queries will immediately be searched for
 
 # retrieves and stores only relevant information from tweepy tweet responses
 # input: tweepy response from search api call
@@ -267,6 +270,7 @@ def parseTwitterResponse(response):
 # input: tweet dictionary
 # output: None
 def insert(tweet):
+    global pullParameters
     print("insert")
     newUser = None
     #if user is not already in db, add them to db
@@ -381,12 +385,16 @@ def searchTwitter():
     for query in twitterSearchQueries:
         #iterate through every page (pause if hit rate limit)
         for page in tweepy.Cursor(api.search, q=query, count=100, tweet_mode='extended', wait_on_rate_limit=True, wait_on_rate_limit_notify=True).pages():
+            if done: #if new twitter search query built, stop this search run
+                break
             searchResults = []
             #parse relevant information from response
             tweets = parseTwitterResponse(page)
             for tweetDict in [i for n, i in enumerate(tweets) if i not in tweets[n + 1:]]: #only add unique tweet to results
                 searchResults.append(tweetDict)
             addToDatabase(searchResults) #add results to db for every page so that db gets updated with new tweets to display often
+        if done:
+            break
     done = True
 
 # pulls relevant tweets from twitter by searching twitter and adding results to db (runs as bg task)
@@ -409,8 +417,8 @@ def pull():
             time.sleep(60)
 
 #start pulling tweets initially with initial search dictionary parameters
-getPullParametersAsStrings(initialSearchDict)
+pullParameters = getPullParametersAsStrings(initialSearchDict)
 buildTwitterSearchQuery(initialSearchDict)
-#
-# pullThread = Thread(target=pull) #pull tweets asynchronously so that main thread isn't blocked
-# pullThread.start()
+
+pullThread = Thread(target=pull) #pull tweets asynchronously so that main thread isn't blocked
+pullThread.start()

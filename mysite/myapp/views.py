@@ -9,7 +9,7 @@ from .models import Tweet
 from .models import HashtagLog
 from .models import UrlLog
 
-from .tasks import buildTwitterSearchQuery, pullParameters, getPullParametersAsStrings
+from .tasks import buildTwitterSearchQuery, getPullParametersAsStrings, initialSearchDict
 from django.db.models import Q
 from datetime import datetime, timedelta
 import pytz
@@ -34,13 +34,13 @@ import os
 currentTwitterSearchDict = {} #dictionary with parameters to search twitter by in array form
 tweetsList = [] #list of tweets to dispaly on website
 dbSearchDict = {}
+pullParameters = {} #dictionary with parameters to search twitter by in string form (to display in website)
 
 # home page controller
 def index(request):
     if not request.user.is_authenticated:
         return redirect('login')
-    global currentTwitterSearchDict, tweetsList
-
+    global currentTwitterSearchDict, tweetsList, pullParameters
     #get what users entered into search bars (so we can redisplay them in the search bars when a download occurs)
 
     if request.GET.get("users"):
@@ -161,10 +161,12 @@ def index(request):
         page = request.GET.get('page')
         tweets = paginator.get_page(page)
 
+    print(tweetsList[0])
+
     return render(request, 'index.html', {'tweets':tweets, 'twitterSearchDict':pullParameters, 'dbSearchDict':dbSearchDict, 'downloaded':False})
 
 def setTwitterSearchQuery(request):
-    global currentTwitterSearchDict, tweetsList
+    global currentTwitterSearchDict, tweetsList, pullParameters
 
     #get entries from form as list (parse entries by space)
     currentTwitterSearchDict['accounts'] = list(part for part in request.GET['pull-users'].split(" ") if part != '')
@@ -190,7 +192,8 @@ def setTwitterSearchQuery(request):
     currentTwitterSearchDict['andKeywords'] = False
 
     #set twitter search query and string
-    getPullParametersAsStrings(currentTwitterSearchDict)
+    pullParameters = getPullParametersAsStrings(currentTwitterSearchDict)
+
     buildTwitterSearchQuery(currentTwitterSearchDict)
 
     return redirect('/')
@@ -386,9 +389,9 @@ def download(csvName):
                  textstat.text_standard(tweet.originalText + commentText, float_output=False),
                  sentiment_dict_combined['neg'], sentiment_dict_combined['neu'],
                  sentiment_dict_combined['pos'], sentiment_dict_combined['compound'],
-                 pullParameters['usersString'], pullParameters['notUsersString'],
-                 pullParameters['hashtagsString'], pullParameters['keywordsString'],
-                 pullParameters['fromDateString'], pullParameters['toDateString']]
+                 tweet.twitterQueryUsers, tweet.twitterQueryNotUsers,
+                 tweet.twitterQueryHashtags, tweet.twitterQueryKeywords,
+                 tweet.twitterQueryFromDate, tweet.twitterQueryToDate]
             )
 
 def activate(request, uidb64, token):
@@ -429,3 +432,5 @@ def signup(request):
     else:
         form = SignUpForm()
     return render(request, 'signup.html', {'form': form})
+
+pullParameters = getPullParametersAsStrings(initialSearchDict)
