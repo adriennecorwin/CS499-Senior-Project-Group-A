@@ -150,8 +150,6 @@ def index(request):
         page = request.GET.get('page')
         tweets = paginator.get_page(page)
 
-    print(tweetsList[0])
-
     return render(request, 'index.html', {'tweets':tweets, 'twitterSearchDict':pullParameters, 'dbSearchDict':dbSearchDict, 'downloaded':False})
 
 def setTwitterSearchQuery(request):
