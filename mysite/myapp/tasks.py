@@ -12,11 +12,11 @@ from threading import Thread
 
 import tweepy
 
-consumer_key = "065p3Ddh3T1rxoAbhsNQKTT0r"
-consumer_secret = "qHTYc1aLUfVFCezVLz1U0yPphthRM0DevNL2AKSxG4LTrzWiWA"
-
-access_token = "1176877630382985217-qFO9wveUf0LycpO8cP23ISSVMr1U3g"
-access_token_secret = "1zr5Guity4uffdYKQ9XCfP6M1r1e8VmeLd6y3Cm9wzoBk"
+import os
+consumer_key = os.environ['CONSUMER_KEY']
+consumer_secret = os.environ['CONSUMER_SECRET']
+access_token = os.environ['ACCESS_TOKEN']
+access_token_secret = os.environ['ACCESS_TOKEN_SECRET']
 
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_token, access_token_secret)
