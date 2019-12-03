@@ -50,6 +50,8 @@ class Tweet(models.Model):
     numFavoritesOriginal = models.IntegerField()
     numFavoritesNew = models.IntegerField(null=True)
     lastUpdated = models.DateTimeField()
+
+    #what twitter search query resulted in this tweet
     twitterQueryUsers = models.TextField(max_length=5000)
     twitterQueryNotUsers = models.TextField(max_length=5000)
     twitterQueryHashtags = models.TextField(max_length=5000)

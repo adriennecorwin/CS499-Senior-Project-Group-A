@@ -191,8 +191,8 @@ def parseTwitterResponse(response):
             u = t.retweeted_status.entities.get('urls')
             numRetweetsOriginal = t.retweeted_status.retweet_count
             numFavoritesOriginal = t.retweeted_status.favorite_count
-            numRetweetsNew = t.retweet_count
-            numFavoritesNew = t.favorite_count
+            # numRetweetsNew = t.retweet_count
+            # numFavoritesNew = t.favorite_count
 
             originalUsername = t.retweeted_status.user.screen_name
             originalScreenName = t.retweeted_status.user.name
@@ -212,7 +212,7 @@ def parseTwitterResponse(response):
             u = t.quoted_status.entities.get('urls')
             numRetweetsOriginal = t.quoted_status.retweet_count
             numFavoritesOriginal = t.quoted_status.favorite_count
-            numRetweetsNew = t.retweet_count
+            # numRetweetsNew = t.retweet_count
             numFavoritesNew = t.favorite_count
 
             originalUsername = t.quoted_status.user.screen_name
@@ -420,5 +420,5 @@ def pull():
 pullParameters = getPullParametersAsStrings(initialSearchDict)
 buildTwitterSearchQuery(initialSearchDict)
 
-pullThread = Thread(target=pull) #pull tweets asynchronously so that main thread isn't blocked
-pullThread.start()
+# pullThread = Thread(target=pull) #pull tweets asynchronously so that main thread isn't blocked
+# pullThread.start()

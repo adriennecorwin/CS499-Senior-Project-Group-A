@@ -2,34 +2,23 @@
 from __future__ import unicode_literals
 from django.shortcuts import render
 from django.shortcuts import redirect
-
+from django.db.models import Q
 from django.core.paginator import Paginator
+from django.utils import timezone
 
 from .models import Tweet
 from .models import HashtagLog
 from .models import UrlLog
 
 from .tasks import buildTwitterSearchQuery, getPullParametersAsStrings, initialSearchDict
-from django.db.models import Q
+from .forms import SignUpForm
+
 from datetime import datetime, timedelta
 import pytz
 import csv
+import os
 import textstat
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-from django.utils import timezone
-from django.contrib.auth import login, authenticate
-from django.shortcuts import redirect
-
-from django.contrib.sites.shortcuts import get_current_site
-from django.utils.encoding import force_bytes, force_text
-from django.utils.http import urlsafe_base64_encode
-from django.template.loader import render_to_string
-from .forms import SignUpForm
-from .tokens import account_activation_token
-
-from django.contrib.auth.models import User as profile
-from django.utils.http import urlsafe_base64_decode
-import os
 
 currentTwitterSearchDict = {} #dictionary with parameters to search twitter by in array form
 tweetsList = [] #list of tweets to dispaly on website
@@ -41,8 +30,8 @@ def index(request):
     if not request.user.is_authenticated:
         return redirect('login')
     global currentTwitterSearchDict, tweetsList, pullParameters
-    #get what users entered into search bars (so we can redisplay them in the search bars when a download occurs)
 
+    #get what users entered into search bars (so we can redisplay them in the search bars when a download occurs)
     if request.GET.get("users"):
         dbSearchDict['users'] = request.GET.get("users")
     if request.GET.get("hashtags"):
@@ -211,6 +200,9 @@ def get_download_path():
     else:
         return os.path.join(os.path.expanduser('~'), 'downloads')
 
+
+
+
 # performs language processing and downloads all tweets currently being displayed in all pages into a csv file
 # input:name of csv to download to
 # output: None
@@ -224,7 +216,8 @@ def download(csvName):
         fieldnames = ['datetime', 'last updated', 'original username', 'original screen name',
                       'original user location', 'original user verified', 'retweet', 'retweeter username',
                       'retweeter screen name', 'retweeter location', 'retweeter verified', 'text', 'comment',
-                      'hashtags', 'urls', '#retweets','#favorites', '#retweets of retweet',
+                      # 'hashtags', 'urls', '#retweets','#favorites', '#retweets of retweet',
+                      'hashtags', 'urls', '#retweets', '#favorites',
                       '#favorites of retweet', 'original syllable count', 'original lexicon count',
                       'original sentence count', 'original flesch reading ease score', 'original flesch-kincaid grade level',
                       'original fog scale', 'original smog index', 'original automated readability index', 'original coleman-liau index',
@@ -355,7 +348,8 @@ def download(csvName):
                  tweet.originalUser.screenName, tweet.originalUser.location, originalVerifiedString,
                  isRetweetString, newUsername, newScreenName, newLocation, newVerifiedString,
                  tweet.originalText, tweet.commentText, hashtagString, urlString, tweet.numRetweetsOriginal,
-                 tweet.numFavoritesOriginal, tweet.numRetweetsNew, tweet.numFavoritesNew,
+                 # tweet.numFavoritesOriginal, tweet.numRetweetsNew, tweet.numFavoritesNew,
+                 tweet.numFavoritesOriginal, tweet.numFavoritesNew,
                  textstat.syllable_count(tweet.originalText, lang='en_US'),
                  textstat.lexicon_count(tweet.originalText, removepunct=True),
                  textstat.sentence_count(tweet.originalText),
@@ -394,41 +388,14 @@ def download(csvName):
                  tweet.twitterQueryFromDate, tweet.twitterQueryToDate]
             )
 
-def activate(request, uidb64, token):
-    try:
-        uid = force_text(urlsafe_base64_decode(uidb64))
-        user = profile.objects.get(pk=uid)
-    except (TypeError, ValueError, OverflowError, profile.DoesNotExist):
-        user = None
-
-    if user is not None and account_activation_token.check_token(user, token):
-        user.is_active = True
-        user.profile.email_confirmed = True
-        user.save()
-        login(request, user)
-        return redirect('home')
-    else:
-        return render(request, 'account_activation_invalid.html')
-
 def signup(request):
-    #TODO:page after signing up telling user that they need to wait until admin lets them in
     if request.method == 'POST':
         form = SignUpForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
             user.is_active = False
             user.save()
-            current_site = get_current_site(request)
-            subject = 'Activate Your SCOTUS Twitter Website Account'
-            message = render_to_string('account_activation_email.html', {
-                'user': user,
-                'domain': current_site.domain,
-                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-                'token': account_activation_token.make_token(user),
-            })
-
-            user.email_user(subject, message, from_email=None)
-            return redirect('home')
+            return redirect('signup')
     else:
         form = SignUpForm()
     return render(request, 'signup.html', {'form': form})

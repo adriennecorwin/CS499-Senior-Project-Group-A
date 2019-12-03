@@ -62,7 +62,7 @@ h1, th {font-family: "Helvetica Neue", sans-serif}
 
                           {% endif %}
                           <span class="activator grey-text text-darken-4"><h6>{{tweet.originalText|urlize}}</h6><i class="material-icons right">more_vert</i></span>
-                          <a href="http://www.twitter.com/{{ tweet.originalUser.username }}" target="_blank"><h6>- @{{tweet.originalUser.username}} {%if tweet.user.isVerified %}<i class="material-icons">check_circle</i>{% endif %}</h6></a>
+                          <a href="http://www.twitter.com/{{ tweet.originalUser.username }}"><h6>- @{{tweet.originalUser.username}} {%if tweet.user.isVerified %}<i class="material-icons">check_circle</i>{% endif %}</h6></a>
                           {% if tweet.isRetweet %}
                             </div>
                           {% endif %}
@@ -76,8 +76,10 @@ h1, th {font-family: "Helvetica Neue", sans-serif}
                               {% if tweet.newUser.location %}
                                 <h6>Location: {{tweet.newUser.location}}</h6>
                               {% endif %}
-                              <h6>Retweets: {{tweet.numRetweetsNew}}</h6>
-                              <h6>Favorites: {{tweet.numFavoritesNew}}</h6>
+                              {% if tweet.commentText %}
+<!--                              <h6>Retweets: {{tweet.numRetweetsNew}}</h6>-->
+                                <h6>Favorites: {{tweet.numFavoritesNew}}</h6>
+                              {% endif %}
                               <p>Last updated: {{tweet.lastUpdated }}</p>
                             </div>
                             <h6>Original Tweet</h6>
@@ -151,6 +153,13 @@ h1, th {font-family: "Helvetica Neue", sans-serif}
 <!-- choose download filename modal -->
 <div id="download-modal" class="modal">
     <div class="modal-content">
+        {% if downloadStatus == "downloading" %}
+
+          <div class="progress">
+              <div class="indeterminate"></div>
+          </div>
+        {% elif downloadStatus == "no download" %}
+
         <h4>Choose File Name</h4>
         <div class="row">
             <form class="col s12" action="" method="GET">{% csrf_token %}
@@ -163,6 +172,7 @@ h1, th {font-family: "Helvetica Neue", sans-serif}
                 </div>
             </form>
         </div>
+        {% endif %}
     </div>
 </div>
 
@@ -234,17 +244,14 @@ h1, th {font-family: "Helvetica Neue", sans-serif}
         $('.modal').modal();
         $('.datepicker').datepicker();
         $('select').formSelect();
-        $('.collapsible').collapsible();
-        $('.tabs').tabs();
-    });
 
-    if("{{downloaded}}" == "True"){
-        M.toast({html: 'Downloaded!'}, 'white');
-    }
-    if("{{changeQueryError}}"){
-        $('#change-query-modal').modal('open');
-        alert("{{changeQueryError}}");
-    }
+        if("{{downloadStatus}}" == "done"){
+            M.toast({html: 'Downloaded!'}, 'white');
+        }
+        else if("{{downloadStatus}}" == "downloading"){
+            $('#download-modal').modal('open');
+        }
+    });
 </script>
 
 <style>

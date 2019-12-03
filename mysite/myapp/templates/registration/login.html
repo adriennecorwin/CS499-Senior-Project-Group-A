@@ -5,6 +5,9 @@
   <h3 class="center">Login</h3>
   <form style="padding-left:50px; padding-right:50px;" method="post">
     {% csrf_token %}
+    {% if form.errors %}
+      <p class="red-text">Error!</p>
+    {% endif %}
     {{ form.as_p }}
     <button class="waves-effect waves-light btn center" type="submit">Login</button>
   </form>
