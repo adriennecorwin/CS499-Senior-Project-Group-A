@@ -1,181 +1,339 @@
-<!DOCTYPE html>
- <!-- Team A / Supreme Court Twitter -->
+{% extends 'base.html' %}
+{% block content %}
+{% load static from staticfiles %}
 
-<html>
 <title>SCOTUS Tweet Database</title>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
 <style>
-body,h1,h2,h3,h4,h5,h6 {font-family: "Raleway", sans-serif}
+body,h2,h3,h4,h5,h6 {font-family: "Raleway", sans-serif}
+h1, th {font-family: "Helvetica Neue", sans-serif}
 </style>
+
+<!--<p><a class="waves-effect waves-light btn" href="{% url 'login' %}">Login</a>-->
+<!--<a class="waves-effect waves-light btn" href="{% url 'signup' %}">Sign up</a></p>-->
+
 <body class="w3-light-grey w3-content" style="max-width:1600px">
-
-<!-- Overlay effect when opening sidebar on small screens -->
-<div class="w3-overlay w3-hide-large w3-animate-opacity" onclick="w3_close()" style="cursor:pointer" title="close side menu" id="myOverlay"></div>
-
-<!-- !PAGE CONTENT! -->
-<div class="w3-main">
-
-  <!-- Header -->
-  <header id="portfolio">
-    <div class="w3-container">
-    <h1><b>SCOTUS Tweet Database</b></h1>
-    <div class="w3-section w3-bottombar w3-padding-16">
-        <form action="universal.cgi" method="GET">
-        <table>
-            <tr>
-                <th>User</th>
-                <th>Hashtag</th>
-                <th>Keyword</th>
-                <th>Date</th>
-                <th></th>
-                
-            </tr>
-            <tr>
-                <td><input type="user" name ="myuser"></td>
-                <td><input type="hashtag" name ="myhashtag"></td>
-                <td><input type="keyword" name ="mykeyword"></td>
-                <td><input type="daterange" name ="mydaterange"></td>
-                <td><input type="submit" name = "submit1" value="Search"></td>
-            </tr>
-        </table>
-                
-    </div>
-    </div>
-  </header>
-  
-  <!-- First Tweet Grid-->
-  <div class="w3-row-padding">
-    <div class="w3-third w3-container w3-margin-bottom">
-      <div class="w3-container w3-white">
-        <p><b>Username</b></p>
-        <p>Sample tweet text. #sample #tweet </p>
-      </div>
-    </div>
-    <div class="w3-third w3-container w3-margin-bottom">
-      <div class="w3-container w3-white">
-        <p><b>Username</b></p>
-        <p>Sample tweet text. #sample #tweet </p>
-      </div>
-    </div>
-    <div class="w3-third w3-container">
-      <div class="w3-container w3-white">
-        <p><b>Username</b></p>
-        <p>Sample tweet text. #sample #tweet </p>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Second tweet Grid-->
-  <div class="w3-row-padding">
-        <div class="w3-third w3-container w3-margin-bottom">
-          <div class="w3-container w3-white">
-            <p><b>Username</b></p>
-            <p>Sample tweet text. #sample #tweet </p>
-          </div>
+    <!-- !PAGE CONTENT! -->
+    <div class="w3-main">
+        <div class="w3-container center grey darken-3 white-text">
+            <a class="right white-text" style="padding-top:10px; font-family: Helvetica Neue, sans-serif" href="{% url 'logout' %}">Logout</a>
+            <h1><img src="{% static 'twitter-logo copy.png' %}" alt="Twitter Logo"><b>SCOTUS Tweet Database</b></h1>
         </div>
-        <div class="w3-third w3-container w3-margin-bottom">
-          <div class="w3-container w3-white">
-            <p><b>Username</b></p>
-            <p>Sample tweet text. #sample #tweet </p>
-          </div>
-        </div>
-        <div class="w3-third w3-container">
-          <div class="w3-container w3-white">
-            <p><b>Username</b></p>
-            <p>Sample tweet text. #sample #tweet </p>
-            </div>
-    </div>
-</div>
 
-    <!-- Third tweet Grid-->
-    <div class="w3-row-padding">
-            <div class="w3-third w3-container w3-margin-bottom">
-              <div class="w3-container w3-white">
-                <p><b>Username</b></p>
-                <p>Sample tweet text. #sample #tweet </p>
-              </div>
+        <div class="w3-section w3-padding-10"></div>
+        <div class="w3-container">
+            <!-- !SEARCH! -->
+            <form action="" method="GET">{% csrf_token %}
+                <table>
+                    <tr>
+                       <td>
+                            <p><label><input value="OR" class="with-gap" name="ANDOR" type="radio"  {% if request.GET.ANDOR == "OR" or request.GET.ANDOR == None %} checked {% endif %}/><span>OR</span></label></p>
+                            <p><label><input value="AND" class="with-gap" name="ANDOR" type="radio" {% if request.GET.ANDOR == "AND" %} checked {% endif %}/><span>AND</span></label></p>
+                       </td>
+                       <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="validate" name="users" {% if downloaded == False %}value="{{ request.GET.users }}"{% else %}value="{{ dbSearchDict.users }}"{% endif %} placeholder="  Users"></td>
+                       <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="validate" name="hashtags" {% if downloaded == False %}value="{{ request.GET.hashtags }}"{% else %}value="{{ dbSearchDict.hashtags }}"{% endif %} placeholder="    Hashtags"></td>
+                       <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="validate" name="keywords" {% if downloaded == False %}value="{{ request.GET.keywords }}"{% else %}value="{{ dbSearchDict.keywords }}"{% endif %} placeholder="    Keywords"></td>
+                       <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="datepicker" name="from" {% if downloaded == False %}value="{{ request.GET.from }}"{% else %}value="{{ dbSearchDict.from }}"{% endif %} placeholder="  From"></td>
+                       <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="datepicker" name="to" {% if downloaded == False %}value="{{ request.GET.to }}"{% else %}value="{{ dbSearchDict.to }}"{% endif %} placeholder="  To"></td>
+
+                       <td><button class="btn-floating waves-effect waves-light btn" type="submit" name="search"><i class="material-icons">search</i></button></td>
+                       <td><a class="btn-floating waves-effect waves-light btn" href="?refresh=true"><i class="material-icons">refresh</i></a></td>
+                       <td><a href="#download-modal" class="btn-floating waves-effect waves-light btn modal-trigger"><i class="material-icons">file_download</i></a></td>
+                    </tr>
+                </table>
+            </form>
+
+            <!--!DISPLAY TWEETS!-->
+            <div class="w3-section w3-padding-10"></div>
+
+                {% for tweet in tweets %}
+                    {% if forloop.counter|divisibleby:2 == False %}
+                        <div class="row">
+                    {% endif %}
+                    <div class="col s6">
+                      <div class="card small">
+                        <div class="card-content">
+                          {% if tweet.isRetweet %}
+                            <p>Retweeted by: <a href="http://www.twitter.com/{{ tweet.newUser.username }}" target="_blank">@{{tweet.newUser.username}}</a></p>
+                            {% if tweet.commentText %}
+                                <span class="activator grey-text text-darken-4"><h6>{{tweet.commentText|urlize}}</h6></span>
+                            {% endif %}
+                            <div class="retweet">
+
+                          {% endif %}
+                          <span class="activator grey-text text-darken-4"><h6>{{tweet.originalText|urlize}}</h6><i class="material-icons right">more_vert</i></span>
+                          <a href="http://www.twitter.com/{{ tweet.originalUser.username }}"><h6>- @{{tweet.originalUser.username}} {%if tweet.user.isVerified %}<i class="material-icons">check_circle</i>{% endif %}</h6></a>
+                          {% if tweet.isRetweet %}
+                            </div>
+                          {% endif %}
+                        </div>
+                        <div class="card-reveal">
+                          <span class="card-title grey-text text-darken-4"><i class="material-icons right">close</i></span>
+                          {% if tweet.isRetweet %}
+                            <h6>Retweet</h6>
+                            <div class="more-info">
+                              <h6>{{tweet.createdAt}}</h6>
+                              {% if tweet.newUser.location %}
+                                <h6>Location: {{tweet.newUser.location}}</h6>
+                              {% endif %}
+                              {% if tweet.commentText %}
+<!--                              <h6>Retweets: {{tweet.numRetweetsNew}}</h6>-->
+                                <h6>Favorites: {{tweet.numFavoritesNew}}</h6>
+                              {% endif %}
+                              <p>Last updated: {{tweet.lastUpdated }}</p>
+                            </div>
+                            <h6>Original Tweet</h6>
+                          {% endif %}
+                          <div class="more-info">
+                              {% if tweet.isRetweet == False %}
+                                <h6>{{tweet.createdAt}}</h6>
+                              {% endif %}
+                              {% if tweet.originalUser.location %}
+                                <h6>Location: {{tweet.originalUser.location}}</h6>
+                              {% endif %}
+                              <h6>Retweets: {{tweet.numRetweetsOriginal}}</h6>
+                              <h6>Favorites: {{tweet.numFavoritesOriginal}}</h6>
+                              {% if tweet.isRetweet == False %}
+                                <p>Last updated: {{tweet.lastUpdated }}</p>
+                              {% endif %}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {% if forloop.counter|divisibleby:2 %}
+                        </div>
+                    {% endif %}
+                {% endfor %}
             </div>
-            <div class="w3-third w3-container w3-margin-bottom">
-              <div class="w3-container w3-white">
-                <p><b>Username</b></p>
-                <p>Sample tweet text. #sample #tweet </p>
-              </div>
-            </div>
-            <div class="w3-third w3-container">
-              <div class="w3-container w3-white">
-                <p><b>Username</b></p>
-                <p>Sample tweet text. #sample #tweet </p>
-                </div>
         </div>
     </div>
-
-    <!-- Fourth tweet Grid-->
-    <div class="w3-row-padding">
-            <div class="w3-third w3-container w3-margin-bottom">
-              <div class="w3-container w3-white">
-                <p><b>Username</b></p>
-                <p>Sample tweet text. #sample #tweet </p>
-              </div>
-            </div>
-            <div class="w3-third w3-container w3-margin-bottom">
-              <div class="w3-container w3-white">
-                <p><b>Username</b></p>
-                <p>Sample tweet text. #sample #tweet </p>
-              </div>
-            </div>
-            <div class="w3-third w3-container">
-              <div class="w3-container w3-white">
-                <p><b>Username</b></p>
-                <p>Sample tweet text. #sample #tweet </p>
-                </div>
-        </div>
-    </div>
-
-    <!-- Fifth tweet Grid-->
-    <div class="w3-row-padding">
-            <div class="w3-third w3-container w3-margin-bottom">
-              <div class="w3-container w3-white">
-                <p><b>Username</b></p>
-                <p>Sample tweet text. #sample #tweet </p>
-              </div>
-            </div>
-            <div class="w3-third w3-container w3-margin-bottom">
-              <div class="w3-container w3-white">
-                <p><b>Username</b></p>
-                <p>Sample tweet text. #sample #tweet </p>
-              </div>
-            </div>
-            <div class="w3-third w3-container">
-              <div class="w3-container w3-white">
-                <p><b>Username</b></p>
-                <p>Sample tweet text. #sample #tweet </p>
-                </div>
-        </div>
-    </div>
-
-  <!-- Pagination -->
-  <div class="w3-center w3-padding-32">
-    <div class="w3-bar">
-      <a href="#" class="w3-bar-item w3-button w3-hover-black">«</a>
-      <a href="#" class="w3-bar-item w3-black w3-button">1</a>
-      <a href="#" class="w3-bar-item w3-button w3-hover-black">2</a>
-      <a href="#" class="w3-bar-item w3-button w3-hover-black">3</a>
-      <a href="#" class="w3-bar-item w3-button w3-hover-black">4</a>
-      <a href="#" class="w3-bar-item w3-button w3-hover-black">»</a>
-    </div>
-  </div>
-
-  <div class="w3-container w3-padding-large" style="margin-bottom:32px">
-    <p>
-      <button class="w3-button w3-dark-grey w3-padding-large w3-margin-top w3-margin-bottom">
-        <i class="fa fa-download w3-margin-right"></i>Download
-      </button>
-    </p>
-</div>
 </body>
-</html>
 
+{% if user.is_superuser %}
+<!-- change twitter search button-->
+<div class="row">
+    <a id="change-query-btn" class="btn-floating btn-large waves-effect waves-light red modal-trigger right" href="#change-query-modal"><i class="material-icons">build</i></a>
+</div>
+{% endif %}
+
+<!-- pagination -->
+<div class="pagination row container">
+
+  {% if tweets.has_previous %}
+    <a class="pagination-action" href="?page=1">
+     <i class="fa fa-angle-double-left" aria-hidden="true"></i>
+    </a>
+    <a class="pagination-action" href="?page={{ tweets.previous_page_number }}">
+      <i class="fa fa-angle-left" aria-hidden="true"></i>
+    </a>
+  {% endif %}
+
+  {% for num in tweets.paginator.page_range %}
+
+    {% if tweets.number == num %}
+    <span class="pagination-number pagination-current">{{ num }}</span>
+    {% elif num > tweets.number|add:'-10' and num < tweets.number|add:'10' %}
+    <a class="pagination-number" href="?page={{ num }}">{{ num }}</a>
+    {% endif %}
+
+  {% endfor %}
+
+  {% if tweets.has_next %}
+    <a class="pagination-action" href="?page={{ tweets.next_page_number }}">
+      <i class="fa fa-angle-right" aria-hidden="true"></i>
+    </a>
+    <a class="pagination-action" href="?page={{ tweets.paginator.num_pages }}">
+      <i class="fa fa-angle-double-right" aria-hidden="true"></i>
+    </a>
+  {% endif %}
+
+</div>
+
+
+<!-- choose download filename modal -->
+<div id="download-modal" class="modal">
+    <div class="modal-content">
+        {% if downloadStatus == "downloading" %}
+
+          <div class="progress">
+              <div class="indeterminate"></div>
+          </div>
+        {% elif downloadStatus == "no download" %}
+
+        <h4>Choose File Name</h4>
+        <div class="row">
+            <form class="col s12" action="" method="GET">{% csrf_token %}
+                <div class="row">
+                    <input id="csv-name" name="csv-name" type="text" class="validate" value="tweets_{{ tweets.0.createdAt|date:'mdY' }}{{ tweets.0.createdAt|time:'HM' }}_{% with tweets|last as last %}{{ last.createdAt|date:'mdY' }}{% endwith %}">
+                    <label for="csv-name">File Name</label>
+                </div>
+                <div class="row">
+                    <button class="waves-effect waves-light btn right" type="submit" name="download"><i class="material-icons">file_download</i></button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- change twitter search query modal -->
+<div id="change-query-modal" class="modal bottom-sheet">
+    <div class="modal-content">
+      <h4 class="center">Search Twitter By</h4>
+        <div class="row">
+            <form class="col s12" action="changeQuery/" method="GET">{% csrf_token %}
+              <div class="row">
+                <div class="input-field col s6">
+                  <input id="pull-users" name="pull-users" type="text" class="validate" value="{{ twitterSearchDict.usersString }}">
+                  <label for="pull-users">Users</label>
+                </div>
+                <div class="input-field col s6">
+                  <input id="pull-not-users" name="pull-not-users" type="text" class="validate" value="{{ twitterSearchDict.notUsersString }}">
+                  <label for="pull-not-users">Unwanted Users</label>
+                </div>
+              </div>
+              <div class="row">
+                <div class="input-field col s6">
+                  <input id="pull-hashtags" name="pull-hashtags" type="text" class="validate" value="{{ twitterSearchDict.hashtagsString }}">
+                  <label for="pull-hashtags">Hashtags</label>
+                </div>
+                <div class="input-field col s6">
+                  <input id="pull-keywords" name="pull-keywords" type="text" class="validate" value="{{ twitterSearchDict.keywordsString }}">
+                  <label for="pull-keywords">Keywords</label>
+                </div>
+              </div>
+              <div class="row">
+                <div class="input-field col s6">
+                    <select name="pull-since">
+                      <option {% if twitterSearchDict.fromDateVal == 0 %} selected="selected" {% endif %} value="0">Today</option>
+                      <option {% if twitterSearchDict.fromDateVal == 1 %} selected="selected" {% endif %} value="1">One Day Ago</option>
+                      <option {% if twitterSearchDict.fromDateVal == 2 %} selected="selected" {% endif %} value="2">Two Days Ago</option>
+                      <option {% if twitterSearchDict.fromDateVal == 3 %} selected="selected" {% endif %} value="3">Three Days Ago</option>
+                      <option {% if twitterSearchDict.fromDateVal == 4 %} selected="selected" {% endif %} value="4">Four Days Ago</option>
+                      <option {% if twitterSearchDict.fromDateVal == 5 %} selected="selected" {% endif %} value="5">Five Days Ago</option>
+                      <option {% if twitterSearchDict.fromDateVal == 6 %} selected="selected" {% endif %} value="6">Six Days Ago</option>
+                      <option {% if twitterSearchDict.fromDateVal == 7 %} selected="selected" {% endif %} value="7">Seven Days Ago</option>
+                    </select>
+                    <label>From (Inclusive)</label>
+                </div>
+                <div class="input-field col s6">
+                    <select name="pull-until">
+                      <option {% if twitterSearchDict.toDateVal == 0 %} selected="selected" {% endif %} value="0">Today</option>
+                      <option {% if twitterSearchDict.toDateVal == -1 %} selected="selected" {% endif %} value="-1">Tomorrow</option>
+                      <option {% if twitterSearchDict.toDateVal == 1 %} selected="selected" {% endif %} value="1">One Day Ago</option>
+                      <option {% if twitterSearchDict.toDateVal == 2 %} selected="selected" {% endif %} value="2">Two Days Ago</option>
+                      <option {% if twitterSearchDict.toDateVal == 3 %} selected="selected" {% endif %} value="3">Three Days Ago</option>
+                      <option {% if twitterSearchDict.toDateVal == 4 %} selected="selected" {% endif %} value="4">Four Days Ago</option>
+                      <option {% if twitterSearchDict.toDateVal == 5 %} selected="selected" {% endif %} value="5">Five Days Ago</option>
+                      <option {% if twitterSearchDict.toDateVal == 6 %} selected="selected" {% endif %} value="6">Six Days Ago</option>
+                      <option {% if twitterSearchDict.toDateVal == 7 %} selected="selected" {% endif %} value="7">Seven Days Ago</option>
+
+                    </select>
+                    <label>To (Exclusive)</label>
+                </div>
+              </div>
+                <p class="fine-print">**In order to yield any tweet results: 1) At least one of users, hashtags, or keywords fields must have be filled 2) From and To dates must be different
+                <button class="waves-effect waves-light btn right" type="submit" name="change"><i class="material-icons">done</i></button> </p>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function(){
+        $('.modal').modal();
+        $('.datepicker').datepicker();
+        $('select').formSelect();
+
+        if("{{downloadStatus}}" == "done"){
+            M.toast({html: 'Downloaded!'}, 'white');
+        }
+        else if("{{downloadStatus}}" == "downloading"){
+            $('#download-modal').modal('open');
+        }
+    });
+</script>
+
+<style>
+    .card {
+        border-radius: 30px;
+    }
+
+    .more-info {
+        margin-top: 25px;
+        margin-bottom: 25px;
+        padding: 20px;
+        border-style: solid;
+        border-width: thin;
+        border-radius: 30px;
+        border-color: #9e9e9e;
+    }
+
+    #change-query-btn {
+        margin-right: 40px;
+    }
+
+    .fine-print {
+        font-size: 10px;
+        color: red;
+
+    }
+
+    .retweet {
+        margin-top: 15px;
+        padding: 15px;
+        border-style: solid;
+        border-width: thin;
+        border-radius: 30px;
+        border-color: #9e9e9e;
+    }
+
+    .pagination {
+        text-align: center;
+        margin-top: 1em;
+    }
+
+    .pagination-number {
+        padding: 0.5em 0.8em;
+        border-radius: 2px;
+        color: #fff;
+        background-color: #009688;
+    }
+
+    .pagination-number:hover, .pagination-current {
+        background-color: #00796b;
+    }
+
+    .pagination-action {
+        margin: 0 0.1em;
+        display: inline-block;
+        padding: 0.5em 0.5em;
+        color: #B9B9B9;
+        font-size: 1.3em;
+    }
+
+    .pagination-action:hover, .pagination-previous, .pagination-next {
+        color: #3354AA;
+    }
+
+    img {
+        height: 10%;
+        width: 10%;
+    }
+
+    .modal {
+        border-radius:30px;
+    }
+
+    .modal.bottom-sheet {
+        max-height: 100% !important;
+        overflow-y: visible;
+    }
+
+    .toast {
+        background-color: #ffffff;
+        color: #000000
+    }
+</style>
+
+{% endblock %}

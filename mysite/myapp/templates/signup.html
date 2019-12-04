@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="register-container">
+  <p><a class="right" style="padding-right:20px;" href="{% url 'login' %}"><i class="material-icons small cancel">cancel</i></a></p>
+
+  <form style="padding-left:50px; padding-right:50px; padding-bottom:30px;" method="post">
+    {% csrf_token %}
+    <h3 class="center">Register</h3>
+    <p class="red-text">*Users will be able to login after Admin approval</p>
+    {% for field in form %}
+      <p>
+        {{ field.label_tag }}<br>
+        {{ field }}
+
+        {% for error in field.errors %}
+          <p style="color: red">{{ error }}</p>
+        {% endfor %}
+      </p>
+    {% endfor %}
+    <button class="waves-effect waves-light btn" type="submit">Sign up</button>
+  </form>
+</div>
+
+{% if field.help_text %}
+  <small style="color: grey">{{ field.help_text }}</small>
+{% endif %}
+
+<style>
+  .register-container{
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translate(-60%, -50%);
+    transform: translate(-50%, -50%);
+    width: 40%;
+    border-style: solid;
+    border-width: thin;
+    border-radius: 30px;
+    border-color: #9e9e9e;
+  }
+
+  .cancel{
+    color:red;
+  }
+</style>
+
+{% endblock %}

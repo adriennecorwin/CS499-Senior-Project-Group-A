@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="login-container">
+  <h3 class="center">Login</h3>
+  <form style="padding-left:50px; padding-right:50px;" method="post">
+    {% csrf_token %}
+    {% if form.errors %}
+      <p class="red-text">Error!</p>
+    {% endif %}
+    {{ form.as_p }}
+    <button class="waves-effect waves-light btn center" type="submit">Login</button>
+  </form>
+  <p class="center">Don't have an account?</p>
+  <p class="center"><a href="{% url 'signup' %}">Register</a></p>
+</div>
+
+
+<style>
+  .login-container{
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translate(-60%, -50%);
+    transform: translate(-50%, -50%);
+    width: 40%;
+    border-style: solid;
+    border-width: thin;
+    border-radius: 30px;
+    border-color: #9e9e9e;
+  }
+</style>
+
+{% endblock %}
