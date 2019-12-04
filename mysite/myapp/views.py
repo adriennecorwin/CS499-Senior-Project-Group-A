@@ -45,11 +45,24 @@ def index(request):
 
     #download
     if request.GET.get("csv-name"):
-        paginator = Paginator(tweetsList, 24)  # only display 24 tweets per page
+        paginator = Paginator(tweetsList, 24)
         page = request.GET.get('page')
         tweets = paginator.get_page(page)
         download(request.GET.get("csv-name"))
         return render(request, 'index.html', {'tweets': tweets, 'twitterSearchDict': pullParameters, 'dbSearchDict':dbSearchDict, 'downloaded':True})
+
+    if request.GET.get("page"):
+        paginator = Paginator(tweetsList, 24)
+        page = request.GET.get('page')
+        tweets = paginator.get_page(page)
+        return render(request, 'index.html', {'tweets': tweets, 'twitterSearchDict': pullParameters, 'dbSearchDict':dbSearchDict, 'downloaded':False})
+
+    #refresh fields so that old search queries won't show up
+    dbSearchDict['users'] = request.GET.get("users")
+    dbSearchDict['hashtags'] = request.GET.get("hashtags")
+    dbSearchDict['keywords'] = request.GET.get("keywords")
+    dbSearchDict['to'] = request.GET.get("to")
+    dbSearchDict['from'] = request.GET.get("from")
 
     #get tweets to display
     tweetsList = Tweet.objects.all().order_by('-createdAt') #get list of all tweets in db most recent to least
@@ -132,7 +145,7 @@ def index(request):
         #if at least 2 of the user, hashtag, or keyword fields have entries, AND results of users, keywords, hashtags queries
         #if none or 1 of the fields is filled out, treat like OR instead
         if request.GET.get("user") != "" and request.GET.get("hashtags") != "" or request.GET.get("user") != "" and request.GET.get("keywords") != "" or request.GET.get("keywords") != "" and request.GET.get("hashtags") != "":
-            tweetsList = list(set(usersList) & set(keywordList) & set(hashtagResults))
+            tweetsList = list(set.intersection(*(set(x) for x in [usersList, keywordList, hashtagResults] if x)))
         else:
             tweetsList = usersList + keywordList + hashtagResults
 
@@ -149,8 +162,6 @@ def index(request):
         paginator = Paginator(tweetsList, 24)
         page = request.GET.get('page')
         tweets = paginator.get_page(page)
-
-    print(tweetsList[0])
 
     return render(request, 'index.html', {'tweets':tweets, 'twitterSearchDict':pullParameters, 'dbSearchDict':dbSearchDict, 'downloaded':False})
 
