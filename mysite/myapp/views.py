@@ -49,13 +49,73 @@ def index(request):
         page = request.GET.get('page')
         tweets = paginator.get_page(page)
         download(request.GET.get("csv-name"))
-        return render(request, 'index.html', {'tweets': tweets, 'twitterSearchDict': pullParameters, 'dbSearchDict':dbSearchDict, 'downloaded':True})
+        return render(request, 'index.html', {'tweets': tweets, 'twitterSearchDict': pullParameters, 'dbSearchDict':dbSearchDict, 'warning':None, 'downloaded':True, 'error':None})
 
     if request.GET.get("page"):
         paginator = Paginator(tweetsList, 24)
         page = request.GET.get('page')
         tweets = paginator.get_page(page)
-        return render(request, 'index.html', {'tweets': tweets, 'twitterSearchDict': pullParameters, 'dbSearchDict':dbSearchDict, 'downloaded':False})
+        return render(request, 'index.html', {'tweets': tweets, 'twitterSearchDict': pullParameters, 'dbSearchDict':dbSearchDict, 'warning':None, 'downloaded':False, 'error':None})
+
+    if request.GET.get("pull-users") or request.GET.get("pull-not-users") or request.GET.get("pull-hashtags") or request.GET.get("pull-keywords"):
+        # get entries from form as list (parse entries by space)
+        currentTwitterSearchDict['accounts'] = list(part for part in request.GET['pull-users'].split(" ") if part != '')
+        currentTwitterSearchDict['notAccounts'] = list(
+            part for part in request.GET['pull-not-users'].split(" ") if part != '')
+        currentTwitterSearchDict['hashtags'] = list(
+            part for part in request.GET['pull-hashtags'].split(" ") if part != '')
+        currentTwitterSearchDict['keywords'] = list(
+            part for part in request.GET['pull-keywords'].split(" ") if part != '')
+
+        currentTwitterSearchDict['fromDate'] = request.GET['pull-since']
+        # get date of x number of days ago from today as specified user in form
+        if request.GET['pull-since'] != "":
+            currentTwitterSearchDict['fromDate'] = datetime.strftime(
+                timezone.now() - timedelta(int(request.GET['pull-since'])), '%Y-%m-%d')
+
+        currentTwitterSearchDict['toDate'] = request.GET['pull-until']
+        if request.GET['pull-until'] != "":
+            # if user entered "tomorrow" get date of tomorrow
+            if int(request.GET['pull-until']) == 8:
+                currentTwitterSearchDict['toDate'] = datetime.strftime(timezone.now() + timedelta(1), '%Y-%m-%d')
+            else:
+                currentTwitterSearchDict['toDate'] = datetime.strftime(
+                    timezone.now() - timedelta(int(request.GET['pull-until'])), '%Y-%m-%d')
+
+        # OR all hashtags and keywords
+        currentTwitterSearchDict['andHashtags'] = False
+        currentTwitterSearchDict['andKeywords'] = False
+
+        # set twitter search query and string
+        pullParameters = getPullParametersAsStrings(currentTwitterSearchDict)
+
+        tweetsList = Tweet.objects.all().order_by('-createdAt')  # get list of all tweets in db most recent to least
+        paginator = Paginator(tweetsList, 24)  # only display 24 tweets per page
+        page = request.GET.get('page')
+        tweets = paginator.get_page(page)
+
+        if not currentTwitterSearchDict['accounts'] and not currentTwitterSearchDict['hashtags'] and not \
+        currentTwitterSearchDict['keywords']:
+            return render(request, 'index.html',
+                          {'tweets': tweets, 'twitterSearchDict': pullParameters, 'dbSearchDict': dbSearchDict,
+                           'downloaded': False,
+                           'warning': "No tweets will be pulled. Must search by at least on of the user, hashtag, or keyword fields.",
+                           'error': None})
+
+        if currentTwitterSearchDict['fromDate'] == currentTwitterSearchDict['toDate'] and currentTwitterSearchDict[
+            'fromDate'] != "":
+            return render(request, 'index.html',
+                          {'tweets': tweets, 'twitterSearchDict': pullParameters, 'dbSearchDict': dbSearchDict,
+                           'downloaded': False,
+                           'warning': "No tweets will be pulled. From and to dates cannot be the same.",
+                           'error': None})
+        if (buildTwitterSearchQuery(currentTwitterSearchDict)):
+            return redirect('/')
+        else:
+            return render(request, 'index.html',
+                          {'tweets': tweets, 'twitterSearchDict': pullParameters, 'dbSearchDict': dbSearchDict,
+                           'downloaded': False, 'warning': None,
+                           'error': "Too many search parameters. Must be fixed before moving on!"})
 
     #refresh fields so that old search queries won't show up
     dbSearchDict['users'] = request.GET.get("users")
@@ -163,7 +223,7 @@ def index(request):
         page = request.GET.get('page')
         tweets = paginator.get_page(page)
 
-    return render(request, 'index.html', {'tweets':tweets, 'twitterSearchDict':pullParameters, 'dbSearchDict':dbSearchDict, 'downloaded':False})
+    return render(request, 'index.html', {'tweets':tweets, 'twitterSearchDict':pullParameters, 'dbSearchDict':dbSearchDict, 'downloaded':False, 'warning':None, 'error':None})
 
 def setTwitterSearchQuery(request):
     global currentTwitterSearchDict, tweetsList, pullParameters
@@ -194,9 +254,28 @@ def setTwitterSearchQuery(request):
     #set twitter search query and string
     pullParameters = getPullParametersAsStrings(currentTwitterSearchDict)
 
-    buildTwitterSearchQuery(currentTwitterSearchDict)
+    tweetsList = Tweet.objects.all().order_by('-createdAt')  # get list of all tweets in db most recent to least
+    paginator = Paginator(tweetsList, 24)  # only display 24 tweets per page
+    page = request.GET.get('page')
+    tweets = paginator.get_page(page)
 
-    return redirect('/')
+    if not currentTwitterSearchDict['accounts'] and not currentTwitterSearchDict['hashtags'] and not currentTwitterSearchDict['keywords']:
+        return render(request, 'index.html',
+               {'tweets': tweets, 'twitterSearchDict': pullParameters, 'dbSearchDict': dbSearchDict,
+                'downloaded': False, 'warning':"No tweets will be pulled. Must search by at least on of the user, hashtag, or keyword fields.", 'error': None})
+
+    if currentTwitterSearchDict['fromDate'] == currentTwitterSearchDict['toDate'] and currentTwitterSearchDict['fromDate'] != "":
+        return render(request, 'index.html',
+               {'tweets': tweets, 'twitterSearchDict': pullParameters, 'dbSearchDict': dbSearchDict,
+                'downloaded': False,
+                'warning': "No tweets will be pulled. From and to dates cannot be the same.",
+                'error': None})
+    if(buildTwitterSearchQuery(currentTwitterSearchDict)):
+        return redirect('/')
+    else:
+        return render(request, 'index.html',
+               {'tweets': tweets, 'twitterSearchDict': pullParameters, 'dbSearchDict': dbSearchDict,
+                'downloaded': False, 'warning':None, 'error': "Too many search parameters. Must be fixed before moving on!"})
 
 #https://stackoverflow.com/questions/35851281/python-finding-the-users-downloads-folder
 def get_download_path():
@@ -410,5 +489,9 @@ def signup(request):
     else:
         form = SignUpForm()
     return render(request, 'signup.html', {'form': form})
+
+def error(request):
+    return render(request, 'error.html')
+
 
 pullParameters = getPullParametersAsStrings(initialSearchDict)

@@ -4,6 +4,8 @@ from .models import Hashtag
 from .models import Url
 from .models import HashtagLog
 from .models import UrlLog
+from django.shortcuts import redirect
+
 
 from datetime import datetime, timedelta
 from django.utils import timezone
@@ -11,12 +13,13 @@ import pytz
 from threading import Thread
 
 import tweepy
+import os
 
-consumer_key = "065p3Ddh3T1rxoAbhsNQKTT0r"
-consumer_secret = "qHTYc1aLUfVFCezVLz1U0yPphthRM0DevNL2AKSxG4LTrzWiWA"
+consumer_key = os.environ['CONSUMER_KEY']
+consumer_secret = os.environ['CONSUMER_SECRET']
 
-access_token = "1176877630382985217-qFO9wveUf0LycpO8cP23ISSVMr1U3g"
-access_token_secret = "1zr5Guity4uffdYKQ9XCfP6M1r1e8VmeLd6y3Cm9wzoBk"
+access_token = os.environ['ACCESS_TOKEN']
+access_token_secret = os.environ['ACCESS_TOKEN_SECRET']
 
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_token, access_token_secret)
@@ -35,7 +38,8 @@ initialSearchDict['keywords'] = []
 twitterSearchQueries = []
 pullParameters = {} #dictionary with parameters to search twitter by in string form (to display in website)
 done = True #true if gone through all results from search request, else false
-
+pull = True
+MAX_PARAMETERS = 50
 # convert the array value of a given dictionary key to a string with elements separated by spaces
 # input:dictionary and key in dictionary that should be converted
 # output: the string
@@ -157,6 +161,11 @@ def buildTwitterSearchQuery(searchDict):
 
     pullParameters = getPullParametersAsStrings(searchDict)
     done = True #so new queries will immediately be searched for
+
+    for query in twitterSearchQueries:
+        if len(query.split(" ")) >= MAX_PARAMETERS:
+            return False
+    return True
 
 # retrieves and stores only relevant information from tweepy tweet responses
 # input: tweepy response from search api call
@@ -379,22 +388,31 @@ def addToDatabase(tweets):
 # input: None
 # output: None
 def searchTwitter():
-    global twitterSearchQueries, api, bigQuery, done
+    global twitterSearchQueries, api, done, pull
     done = False
     # print("search:", twitterSearchQueries)
     for query in twitterSearchQueries:
+        retries = 0
         #iterate through every page (pause if hit rate limit)
-        for page in tweepy.Cursor(api.search, q=query, count=100, tweet_mode='extended', wait_on_rate_limit=True, wait_on_rate_limit_notify=True).pages():
-            if done: #if new twitter search query built, stop this search run
+        try:
+            for page in tweepy.Cursor(api.search, q=query, count=100, tweet_mode='extended', wait_on_rate_limit=True, wait_on_rate_limit_notify=True).pages():
+                if done: #if new twitter search query built, stop this search run
+                    break
+                searchResults = []
+                #parse relevant information from response
+                tweets = parseTwitterResponse(page)
+                for tweetDict in [i for n, i in enumerate(tweets) if i not in tweets[n + 1:]]: #only add unique tweet to results
+                    searchResults.append(tweetDict)
+                addToDatabase(searchResults) #add results to db for every page so that db gets updated with new tweets to display often
+            if done:
                 break
-            searchResults = []
-            #parse relevant information from response
-            tweets = parseTwitterResponse(page)
-            for tweetDict in [i for n, i in enumerate(tweets) if i not in tweets[n + 1:]]: #only add unique tweet to results
-                searchResults.append(tweetDict)
-            addToDatabase(searchResults) #add results to db for every page so that db gets updated with new tweets to display often
-        if done:
-            break
+        except tweepy.TweepError as e:
+            print(e)
+            if retries > 2:
+                pull = False
+                redirect("error")
+            retries += 1
+
     done = True
 
 # pulls relevant tweets from twitter by searching twitter and adding results to db (runs as bg task)
@@ -405,7 +423,7 @@ def pull():
     global done
 
     #continuously try to pull new tweets
-    while True:
+    while pull:
         #if done getting all results from a search request
         if done:
             print("pulling")
@@ -420,5 +438,5 @@ def pull():
 pullParameters = getPullParametersAsStrings(initialSearchDict)
 buildTwitterSearchQuery(initialSearchDict)
 
-# pullThread = Thread(target=pull) #pull tweets asynchronously so that main thread isn't blocked
-# pullThread.start()
+pullThread = Thread(target=pull) #pull tweets asynchronously so that main thread isn't blocked
+pullThread.start()

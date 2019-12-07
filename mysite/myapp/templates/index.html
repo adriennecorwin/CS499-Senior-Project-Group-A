@@ -167,7 +167,7 @@ h1, th {font-family: "Helvetica Neue", sans-serif}
     <div class="modal-content">
       <h4 class="center">Search Twitter By</h4>
         <div class="row">
-            <form class="col s12" action="changeQuery/" method="GET">{% csrf_token %}
+            <form class="col s12" action="" method="GET">{% csrf_token %}
               <div class="row">
                 <div class="input-field col s6">
                   <input id="pull-users" name="pull-users" type="text" class="validate" value="{{ twitterSearchDict.usersString }}">
@@ -225,14 +225,42 @@ h1, th {font-family: "Helvetica Neue", sans-serif}
     </div>
 </div>
 
+<!-- error modal -->
+<div id="error-modal" class="modal">
+    <div class="modal-content">
+        <h4 id=error-title class="center red-text"></h4>
+        <div class="row">
+            <p id="error-message" class="center red-text"></p>
+        </div>
+    </div>
+</div>
+
 <script>
     $(document).ready(function(){
         $('.modal').modal();
         $('.datepicker').datepicker();
         $('select').formSelect();
+        $('#change-query-modal').modal({
+            dismissible: true
+        });
 
         if("{{downloaded}}" == "True"){
             M.toast({html: 'Downloaded!'}, 'white');
+        }
+        if("{{warning}}" != "None"){
+            $('#change-query-modal').modal('open');
+            $('#error-modal').modal('open');
+            $('#error-title').html("WARNING");
+            $('#error-message').html("{{warning}}");
+        }
+        if("{{error}}" != "None"){
+            $('#change-query-modal').modal({
+                dismissible: false
+            });
+            $('#change-query-modal').modal('open');
+            $('#error-modal').modal('open');
+            $('#error-title').html("ERROR");
+            $('#error-message').html("{{error}}");
         }
     });
 </script>
