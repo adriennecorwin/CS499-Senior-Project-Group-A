@@ -19,6 +19,24 @@ def driver():
     driver.implicitly_wait(10)
     yield driver
 
+def test_signup(driver):
+    signup = driver.find_element_by_xpath("//a[@href='/signup/']")
+    signup.click()
+
+    assert (driver.current_url == 'https://supreme-court-twitter.herokuapp.com/signup/')
+
+def test_adminlogin(driver):
+    username = driver.find_element_by_xpath("//input[@name='username']")
+    username.send_keys('admin')
+
+    password = driver.find_element_by_xpath("//input[@name='password']")
+    password.send_keys('password')
+
+    login = driver.find_element_by_xpath("//button[@type='submit']")
+    login.click()
+
+    assert (driver.current_url == 'https://supreme-court-twitter.herokuapp.com/')
+
 # Test search function with AND selected
 # Should return tweets including all search queries
 def test_andsearch(driver):
@@ -34,7 +52,7 @@ def test_andsearch(driver):
     keywords = driver.find_element_by_xpath("//input[@name='keywords']")
     keywords.send_keys('Supreme Court')
 
-    '''date_from = driver.find_element_by_xpath("//input[@name='from']")
+    ''''date_from = driver.find_element_by_xpath("//input[@name='from']")
     date_from.click()
     day = driver.find_element_by_xpath("//button[@data-day='1']")
     day.click()
@@ -147,6 +165,27 @@ def test_edit(driver):
     change_button.click()
 
     assert driver.find_element_by_xpath("//input[@name='pull-keywords'][@value='Supreme Court']")
+
+def test_logout(driver):
+    logout = driver.find_element_by_xpath("//a[text()='Logout']")
+    logout.click()
+
+    assert (driver.current_url == 'https://supreme-court-twitter.herokuapp.com/login/')
+
+def test_userlogin(driver):
+    username = driver.find_element_by_xpath("//input[@name='username']")
+    username.send_keys('test')
+
+    password = driver.find_element_by_xpath("//input[@name='password']")
+    password.send_keys('cs499rocks')
+
+    login = driver.find_element_by_xpath("//button[@type='submit']")
+    login.click()
+
+    assert (driver.current_url == 'https://supreme-court-twitter.herokuapp.com/')
+
+def test_userpage(driver):
+    assert (not driver.find_element_by_xpath("//a[@id='change-query-btn']"))
 
 # Cleans up after tests
 def test_quit(driver):
