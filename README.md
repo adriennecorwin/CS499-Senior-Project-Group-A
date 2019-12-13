@@ -52,10 +52,30 @@ Inside the mysite folder of project directory
  
  create a python 3.6 virtual environment 
  
- install dependencies
+ install dependencies (make sure pip is for python 3.6)
  
-    pip install -r requirements.txt (make sure pip is for python 3.6)
-  
+    pip install -r requirements.txt 
+    
+ install httpd-devel
+ 
+    sudo yum install httpd24-devel
+ 
+ install mod_wsgi
+ 
+    sudo python3.6 -m pip install mod_wsgi
+    
+ add load mod_wsgi
+ 
+    vi /etc/httpd/conf.modules.d/mod_wsgi36.conf
+    
+ write the following to the file
+ 
+    LoadModule wsgi_module "/usr/local/lib64/python3.6/site-packages/mod_wsgi/server/mod_wsgi-py36.cpython-36m-x86_64-linux-gnu.so"
+ 
+ this should be the output of the following command
+ 
+    /usr/local/bin/mod_wsgi-express module-config
+ 
  create an apache config file for the django app (possibly /etc/httpd/conf.d/django.conf)
  
  write the following to the .conf file
