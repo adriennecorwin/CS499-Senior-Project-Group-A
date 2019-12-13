@@ -1,5 +1,9 @@
 # CS499-Senior-Project-Group-A
 
+currently the website url is http://scotusapp.aws.uky.edu/scotustwitter/
+
+access if only allowed if on uky wifi or if using uky vpn
+
 ## Locally
 
 Create a virtual environment for the project to run in (using python 3.6)
@@ -102,3 +106,10 @@ Inside the mysite folder of project directory
     sudo apachectl restart
  
  navigate to ec2domain/scotustwitter 
+ 
+ 
+ ### Known Bugs
+ 
+ 1)Logout of admin page redirect to login of website
+ 
+ 2)Admin page doesn't seem to render correctly on deployed site
