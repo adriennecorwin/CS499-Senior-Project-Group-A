@@ -14,10 +14,11 @@ from threading import Thread
 
 import tweepy
 import os
+import time
+import random
 
 consumer_key = os.environ['CONSUMER_KEY']
 consumer_secret = os.environ['CONSUMER_SECRET']
-
 access_token = os.environ['ACCESS_TOKEN']
 access_token_secret = os.environ['ACCESS_TOKEN_SECRET']
 
@@ -28,7 +29,6 @@ api = tweepy.API(auth)
 #initial twitter search criteria
 initialSearchDict = {}
 initialSearchDict['hashtags'] = ["scotus", 'supremecourt', 'ussc', 'chiefjustice', 'billofrights', 'constitution', 'ussupremecourt', 'highcourt', 'abortion']
-initialSearchDict['andHashtags'] = False
 initialSearchDict['accounts'] = ['stevenmazie', 'JeffreyToobin', 'DCCIR', 'GregStohr', 'AlisonFrankel']
 initialSearchDict['notAccounts'] = ['John_Scotus', 'ScotusCC']
 initialSearchDict['fromDate'] = datetime.strftime(timezone.now() - timedelta(1), '%Y-%m-%d')
@@ -38,9 +38,10 @@ initialSearchDict['keywords'] = []
 twitterSearchQueries = []
 pullParameters = {} #dictionary with parameters to search twitter by in string form (to display in website)
 done = True #true if gone through all results from search request, else false
-pull = True
-MAX_PARAMETERS = 50
+pulling = {'pulling': True} #if user has started pulling tweets, dict (mutable) so it can be accessed from view.py
+MAX_PARAMETERS = 50 #max before Twitter API errors bc of too complex query
 # convert the array value of a given dictionary key to a string with elements separated by spaces
+
 # input:dictionary and key in dictionary that should be converted
 # output: the string
 def searchListToString(d, key):
@@ -102,66 +103,68 @@ def buildTwitterSearchQuery(searchDict):
     global twitterSearchQueries #global so that the pull function always uses the most up to date queries
     global done
     global pullParameters
-    twitterSearchQueries = []
-    #build query for keywords
-    keywordQuery = ""
-    for i in range(len(searchDict['keywords'])):
-        keywordQuery += searchDict['keywords'][i]
-        if i < len(searchDict['keywords']) - 1:
-            if searchDict['andKeywords']:
-                keywordQuery += " AND "
-            else:
-                keywordQuery += " OR "
 
-    #build query for hashtags
-    hashtagQuery = ""
-    for i in range(len(searchDict['hashtags'])):
-        hashtagQuery += "#" + searchDict['hashtags'][i]
-        if i < len(searchDict['hashtags']) - 1:
-            if searchDict['andHashtags']:
-                hashtagQuery += " AND "
-            else:
-                hashtagQuery += " OR "
+    twitterSearchQueries = [] #clear previous queries
+    keywordParameters = []
+    hashtagParameters = []
+    accountParameters = []
 
-    #add keyword and hashtag queries to list
-    if hashtagQuery != "":
-        twitterSearchQueries.append(hashtagQuery)
-    if keywordQuery != "":
-        twitterSearchQueries.append(keywordQuery)
+    for keyword in searchDict['keywords']:
+        keywordParameters.append(keyword)
+    for hashtag in searchDict['hashtags']:
+        hashtagParameters.append("#" + hashtag)
+    for account in searchDict['accounts']:
+        accountParameters.append("to:"+account)
+        accountParameters.append("from:"+account)
+        accountParameters.append("@"+account)
 
-    #add user blacklist to hashtag and keyword queries
-    #done after they are added to list to ensure blacklist only added if query exists
-    for i in range(len(twitterSearchQueries)):
-        for j in range(len(searchDict['notAccounts'])):
-            twitterSearchQueries[i] += " -from:" + searchDict['notAccounts'][j]
+    numDates = 0 # number of dates to append to end of each query
 
-    #build query for accounts
-    accountsQuery = ""
-    for i in range(len(searchDict['accounts'])):
-        accountsQuery += "from:" + searchDict['accounts'][i] + " OR "
-    for i in range(len(searchDict['accounts'])):
-        accountsQuery += "to:" + searchDict['accounts'][i] + " OR "
-    for i in range(len(searchDict['accounts'])):
-        accountsQuery += "@" + searchDict['accounts'][i]
-        if i < len(searchDict['accounts']) - 1:
-            accountsQuery += " OR "
-
-    if accountsQuery != "":
-        twitterSearchQueries.append(accountsQuery)
-
-    #add date range constraint on all queries
     if searchDict['fromDate'] != "":
-        fromDateQuery = " since:" + searchDict['fromDate']
-        for i in range(len(twitterSearchQueries)):
-            twitterSearchQueries[i] += fromDateQuery
+        numDates += 1
     if searchDict['toDate'] != "":
-        toDateQuery = " until:" + searchDict['toDate']
-        for i in range(len(twitterSearchQueries)):
-            twitterSearchQueries[i] += toDateQuery
+        numDates += 1
+
+    #build queries with randomly selected keywords, hashtags, and accounts until there are no more parameters or the query has gotten too complex (then start new one)
+    while len(keywordParameters) + len(hashtagParameters) + len(accountParameters) != 0:
+        query = ""
+        while len(query.split(" ")) < MAX_PARAMETERS - len(searchDict['notAccounts']) - numDates - 1 and len(keywordParameters) + len(hashtagParameters) + len(accountParameters) != 0:
+            if keywordParameters:
+                parameter = random.choice(keywordParameters)
+                query += parameter + " OR "
+                keywordParameters.remove(parameter)
+            if hashtagParameters:
+                parameter = random.choice(hashtagParameters)
+                query += parameter + " OR "
+                hashtagParameters.remove(parameter)
+            if accountParameters:
+                parameter = random.choice(accountParameters)
+                query += parameter + " OR "
+                accountParameters.remove(parameter)
+
+        #eliminate last OR
+        if numDates + len(searchDict['notAccounts']) != 0:
+            query = query[:len(query)-3]
+        else:
+            query = query[:len(query)-4]
+
+        #add accounts to be excluded from search parameter to query
+        for i in range(len(searchDict['notAccounts'])):
+            query += "-from:" + searchDict['notAccounts'][i]
+            if i != len(searchDict['notAccounts']) -1:
+                query += " "
+
+        #add to and from dates parameters to query
+        if searchDict['fromDate'] != "":
+            query += " since:" + searchDict['fromDate']
+        if searchDict['toDate'] != "":
+            query += " until:" + searchDict['toDate']
+        twitterSearchQueries.append(query)
 
     pullParameters = getPullParametersAsStrings(searchDict)
     done = True #so new queries will immediately be searched for
 
+    #if any queries are too long, return False
     for query in twitterSearchQueries:
         if len(query.split(" ")) >= MAX_PARAMETERS:
             return False
@@ -388,7 +391,7 @@ def addToDatabase(tweets):
 # input: None
 # output: None
 def searchTwitter():
-    global twitterSearchQueries, api, done, pull
+    global twitterSearchQueries, api, done, pulling
     done = False
     # print("search:", twitterSearchQueries)
     for query in twitterSearchQueries:
@@ -396,7 +399,7 @@ def searchTwitter():
         #iterate through every page (pause if hit rate limit)
         try:
             for page in tweepy.Cursor(api.search, q=query, count=100, tweet_mode='extended', wait_on_rate_limit=True, wait_on_rate_limit_notify=True).pages():
-                if done: #if new twitter search query built, stop this search run
+                if done or not pulling['pulling']: #if new twitter search query built, stop this search run
                     break
                 searchResults = []
                 #parse relevant information from response
@@ -409,7 +412,7 @@ def searchTwitter():
         except tweepy.TweepError as e:
             print(e)
             if retries > 2:
-                pull = False
+                pulling['pulling'] = False
                 redirect("error")
             retries += 1
 
@@ -419,24 +422,28 @@ def searchTwitter():
 # input: None
 # output: None
 def pull():
-    import time
-    global done
+    global done, pulling
+    while True:
+        #continuously try to pull new tweets
+        while pulling['pulling']:
+            #if done getting all results from a search request
+            if done:
+                print("pulling")
+                #execute search request again
+                searchTwitter()
+                print("pulled")
+            #if not done getting all search results, wait 1 minute and then try again
+            else:
+                time.sleep(60)
 
-    #continuously try to pull new tweets
-    while pull:
-        #if done getting all results from a search request
-        if done:
-            print("pulling")
-            #execute search request again
-            searchTwitter()
-            print("pulled")
-        #if not done getting all search results, wait 1 minute and then try again
-        else:
-            time.sleep(60)
+def startStopPull(request):
+    global pulling
+    pulling['pulling'] = not pulling['pulling']
+    return redirect('/')
 
 #start pulling tweets initially with initial search dictionary parameters
 pullParameters = getPullParametersAsStrings(initialSearchDict)
 buildTwitterSearchQuery(initialSearchDict)
 
-pullThread = Thread(target=pull) #pull tweets asynchronously so that main thread isn't blocked
-pullThread.start()
+# pullThread = Thread(target=pull) #pull tweets asynchronously so that main thread isn't blocked
+# pullThread.start()

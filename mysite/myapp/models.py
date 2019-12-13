@@ -7,8 +7,8 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 class Profile(models.Model):
-    user = models.OneToOneField(account, on_delete=models.CASCADE)
-    email_confirmed = models.BooleanField(default=False)
+    user = models.OneToOneField(account, on_delete=models.CASCADE, primary_key=True)
+    reason = models.TextField(max_length=500)
     # other fields...
 
 @receiver(post_save, sender=account)
@@ -16,7 +16,6 @@ def update_user_profile(sender, instance, created, **kwargs):
     if created:
         Profile.objects.create(user=instance)
     instance.profile.save()
-
 
 # Create your models here.
 
@@ -66,3 +65,4 @@ class HashtagLog(models.Model):
 class UrlLog(models.Model):
     tweet = models.ForeignKey(Tweet, on_delete=models.CASCADE)
     url = models.ForeignKey(Url, on_delete=models.CASCADE)
+

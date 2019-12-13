@@ -8,6 +8,7 @@
 body,h2,h3,h4,h5,h6 {font-family: "Raleway", sans-serif}
 h1, th {font-family: "Helvetica Neue", sans-serif}
 </style>
+
 <body class="w3-light-grey w3-content" style="max-width:1600px">
     <!-- !PAGE CONTENT! -->
     <div class="w3-main">
@@ -26,15 +27,15 @@ h1, th {font-family: "Helvetica Neue", sans-serif}
                             <p><label><input value="OR" class="with-gap" name="ANDOR" type="radio"  {% if request.GET.ANDOR == "OR" or request.GET.ANDOR == None %} checked {% endif %}/><span>OR</span></label></p>
                             <p><label><input value="AND" class="with-gap" name="ANDOR" type="radio" {% if request.GET.ANDOR == "AND" %} checked {% endif %}/><span>AND</span></label></p>
                        </td>
-                       <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="validate" name="users" {% if downloaded == False and request.GET.page == None %}value="{{ request.GET.users }}"{% elif dbSearchDict.users != None %}value="{{ dbSearchDict.users }}"{% endif %} placeholder="  Users"></td>
-                       <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="validate" name="hashtags" {% if downloaded == False and request.GET.page == None %}value="{{ request.GET.hashtags }}"{% elif dbSearchDict.hashtags != None %}value="{{ dbSearchDict.hashtags }}"{% endif %} placeholder="    Hashtags"></td>
-                       <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="validate" name="keywords" {% if downloaded == False and request.GET.page == None %}value="{{ request.GET.keywords }}"{% elif dbSearchDict.keywords != None %}value="{{ dbSearchDict.keywords }}"{% endif %} placeholder="    Keywords"></td>
-                       <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="datepicker" name="from" {% if downloaded == False and request.GET.page == None %}value="{{ request.GET.from }}"{% elif dbSearchDict.from != None %}value="{{ dbSearchDict.from }}"{% endif %} placeholder="  From"></td>
-                       <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="datepicker" name="to" {% if downloaded == False and request.GET.page == None %}value="{{ request.GET.to }}"{% elif dbSearchDict.to != None %}value="{{ dbSearchDict.to }}"{% endif %} placeholder="  To"></td>
+                       <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="validate" name="users" {% if request.GET.page == None %}value="{{ request.GET.users }}"{% elif dbSearchDict.users != None %}value="{{ dbSearchDict.users }}"{% endif %} placeholder="  Users"></td>
+                       <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="validate" name="hashtags" {% if request.GET.page == None %}value="{{ request.GET.hashtags }}"{% elif dbSearchDict.hashtags != None %}value="{{ dbSearchDict.hashtags }}"{% endif %} placeholder="    Hashtags"></td>
+                       <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="validate" name="keywords" {% if request.GET.page == None %}value="{{ request.GET.keywords }}"{% elif dbSearchDict.keywords != None %}value="{{ dbSearchDict.keywords }}"{% endif %} placeholder="    Keywords"></td>
+                       <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="datepicker" name="from" {% if request.GET.page == None %}value="{{ request.GET.from }}"{% elif dbSearchDict.from != None %}value="{{ dbSearchDict.from }}"{% endif %} placeholder="  From"></td>
+                       <td><input type="text" style="background-color:white; border-radius:5px; border:1px solid #9e9e9e" class="datepicker" name="to" {% if request.GET.page == None %}value="{{ request.GET.to }}"{% elif dbSearchDict.to != None %}value="{{ dbSearchDict.to }}"{% endif %} placeholder="  To"></td>
 
                        <td><button class="btn-floating waves-effect waves-light btn" type="submit" name="search"><i class="material-icons">search</i></button></td>
                        <td><a class="btn-floating waves-effect waves-light btn" href="?refresh=true"><i class="material-icons">refresh</i></a></td>
-                       <td><a href="#download-modal" class="btn-floating waves-effect waves-light btn modal-trigger"><i class="material-icons">file_download</i></a></td>
+                       <td><a href="download" class="btn-floating waves-effect waves-light btn modal-trigger"><i class="material-icons">file_download</i></a></td>
                     </tr>
                 </table>
             </form>
@@ -144,24 +145,6 @@ h1, th {font-family: "Helvetica Neue", sans-serif}
 
 </div>
 
-
-<!-- choose download filename modal -->
-<div id="download-modal" class="modal">
-    <div class="modal-content">
-        <h4>Choose File Name</h4>
-        <div class="row">
-            <form class="col s12" action="" method="GET">{% csrf_token %}
-                <div class="row">
-                    <input id="csv-name" name="csv-name" type="text" class="validate" value="tweets_{{ tweets.0.createdAt|date:'mdY' }}{{ tweets.0.createdAt|time:'HM' }}_{% with tweets|last as last %}{{ last.createdAt|date:'mdY' }}{% endwith %}">
-                    <label for="csv-name">File Name</label>
-                    <button class="waves-effect waves-light btn right" type="submit" name="download"><i class="material-icons">file_download</i></button>
-                </div>
-
-            </form>
-        </div>
-    </div>
-</div>
-
 <!-- change twitter search query modal -->
 <div id="change-query-modal" class="modal bottom-sheet">
     <div class="modal-content">
@@ -218,8 +201,14 @@ h1, th {font-family: "Helvetica Neue", sans-serif}
                     <label>To (Exclusive)</label>
                 </div>
               </div>
-                <p class="fine-print">**In order to yield any tweet results: 1) At least one of users, hashtags, or keywords fields must have be filled 2) From and To dates must be different
-                <button class="waves-effect waves-light btn right" type="submit" name="change"><i class="material-icons">done</i></button> </p>
+                <button class="waves-effect waves-light btn right" type="submit" name="change"><i class="material-icons">done</i></button>
+                    {% if pulling %}
+                        <a class="left waves-effect waves-light" href="/stop"><i class="material-icons" style="color:red;">stop</i></a>
+                        <p>Stop Pulling</p>
+                    {% else %}
+                        <a class="left waves-effect waves-light" href="/start"><i class="material-icons" style="color:green;">play_arrow</i></a>
+                        <p>Start Pulling</p>
+                    {% endif %}
             </form>
         </div>
     </div>
@@ -244,9 +233,6 @@ h1, th {font-family: "Helvetica Neue", sans-serif}
             dismissible: true
         });
 
-        if("{{downloaded}}" == "True"){
-            M.toast({html: 'Downloaded!'}, 'white');
-        }
         if("{{warning}}" != "None"){
             $('#change-query-modal').modal('open');
             $('#error-modal').modal('open');
@@ -282,12 +268,6 @@ h1, th {font-family: "Helvetica Neue", sans-serif}
 
     #change-query-btn {
         margin-right: 40px;
-    }
-
-    .fine-print {
-        font-size: 10px;
-        color: red;
-
     }
 
     .retweet {

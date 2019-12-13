@@ -1,0 +1,10 @@
+{% autoescape off %}
+Someone is requesting access to the SCOTUS Twitter Database website.
+Name: {{ user.first_name }} {{ user.last_name }}
+Email: {{ user.email }}
+Reason: {{ reason }}
+
+Please click on the link below to activate their account:
+
+http://{{ domain }}{% url 'activate' uidb64=uid token=token %}
+{% endautoescape %}
