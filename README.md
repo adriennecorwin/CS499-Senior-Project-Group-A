@@ -72,13 +72,11 @@ Inside the mysite folder of project directory
             </Files>
         </Directory>
 
-        WSGIDaemonProcess mysite python-path=/home/ec2-user/CS499-Senior-Project-Group-A/mysite python-home=/home/ec2-user/eb-virt
+        WSGIDaemonProcess mysite python-path=/home/ec2-user/CS499-Senior-Project-Group-A/mysite python-home=/path/to/virtualenv
         WSGIProcessGroup mysite
         WSGIScriptAlias /scotustwitter /home/ec2-user/CS499-Senior-Project-Group-A/mysite/mysite/production.wsgi
     </VirtualHost>
- 
- python-home should be the path to your virtual environment
- 
+  
  restart the server
  
     sudo apachectl restart
