@@ -153,21 +153,21 @@ h1, th {font-family: "Helvetica Neue", sans-serif}
             <form class="col s12" action="" method="GET">{% csrf_token %}
               <div class="row">
                 <div class="input-field col s6">
-                  <input id="pull-users" name="pull-users" type="text" class="validate" value="{{ twitterSearchDict.usersString }}">
+                  <textarea id="pull-users" name="pull-users" class="materialize-textarea">{{ twitterSearchDict.usersString }}</textarea>
                   <label for="pull-users">Users</label>
                 </div>
                 <div class="input-field col s6">
-                  <input id="pull-not-users" name="pull-not-users" type="text" class="validate" value="{{ twitterSearchDict.notUsersString }}">
+                  <textarea id="pull-not-users" name="pull-not-users" class="materialize-textarea">{{ twitterSearchDict.notUsersString }}</textarea>
                   <label for="pull-not-users">Unwanted Users</label>
                 </div>
               </div>
               <div class="row">
                 <div class="input-field col s6">
-                  <input id="pull-hashtags" name="pull-hashtags" type="text" class="validate" value="{{ twitterSearchDict.hashtagsString }}">
+                  <textarea id="pull-hashtags" name="pull-hashtags" class="materialize-textarea">{{ twitterSearchDict.hashtagsString }}</textarea>
                   <label for="pull-hashtags">Hashtags</label>
                 </div>
                 <div class="input-field col s6">
-                  <input id="pull-keywords" name="pull-keywords" type="text" class="validate" value="{{ twitterSearchDict.keywordsString }}">
+                  <textarea id="pull-keywords" name="pull-keywords" class="materialize-textarea">{{ twitterSearchDict.keywordsString }}</textarea>
                   <label for="pull-keywords">Keywords</label>
                 </div>
               </div>
