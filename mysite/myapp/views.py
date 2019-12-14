@@ -100,7 +100,7 @@ def index(request):
                            'warning': "No tweets will be pulled. From and to dates cannot be the same.",
                            'error': None})
         if (buildTwitterSearchQuery(currentTwitterSearchDict)):
-            return redirect('/')
+            return redirect('/scotustwitter')
         else:
             return render(request, 'index.html',
                           {'tweets': tweets, 'twitterSearchDict': pullParameters, 'dbSearchDict': dbSearchDict,
@@ -124,7 +124,7 @@ def index(request):
     #refresh
     if request.GET.get("refresh"): #refresh page aka display all tweets from db again
         if request.GET.get("refresh") == "true":
-            return redirect('/')
+            return redirect('/scotustwitter')
 
     #search
     userQueries = []
@@ -425,7 +425,7 @@ def signup(request):
             })
 
             email = EmailMessage(
-                subject, message, to=os.environ['ADMIN_EMAILS']
+                subject, message, to=os.environ['ADMIN_EMAILS'].split(",")
             )
             email.send()
             return HttpResponse('Your access request has been sent to an administrator.\nYou will be emailed once you accound has been approved.\nAfter that you will be able to sign into the website.')

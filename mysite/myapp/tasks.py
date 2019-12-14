@@ -439,7 +439,7 @@ def pull():
 def startStopPull(request):
     global pulling
     pulling['pulling'] = not pulling['pulling']
-    return redirect('/')
+    return redirect('/scotustwitter')
 
 #start pulling tweets initially with initial search dictionary parameters
 pullParameters = getPullParametersAsStrings(initialSearchDict)

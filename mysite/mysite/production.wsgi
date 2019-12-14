@@ -8,9 +8,9 @@ os.environ['DB_HOST']="127.0.0.1"
 os.environ['DB_PORT']="3306"
 os.environ['DB_USER']="root"
 os.environ['DB_PASSWORD']="cs499"
-os.environ['ADMIN_EMAILS']=['adriennecorwin@gmail.com', 'michael.zilis@uky.edu', 'justin.wedeking@uky.edu']
 os.environ['EMAIL_HOST_USER']="cs499teamA@gmail.com"
 os.environ['EMAIL_HOST_PASSWORD']="SCOTUSTwitter2019"
+os.environ['ADMIN_EMAILS']="adriennecorwin@gmail.com,michael.zilis@uky.edu,justin.wedeking@uky.edu"
 
 from django.core.wsgi import get_wsgi_application
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mysite.settings")
