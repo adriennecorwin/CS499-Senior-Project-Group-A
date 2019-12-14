@@ -28,8 +28,20 @@ api = tweepy.API(auth)
 
 #initial twitter search criteria
 initialSearchDict = {}
-initialSearchDict['hashtags'] = ["scotus", 'supremecourt', 'ussc', 'chiefjustice', 'billofrights', 'constitution', 'ussupremecourt', 'highcourt', 'abortion']
-initialSearchDict['accounts'] = ['stevenmazie', 'JeffreyToobin', 'DCCIR', 'GregStohr', 'AlisonFrankel']
+initialSearchDict['hashtags'] = ["scotus", 'supremecourt', 'ussc', 'court', 'billofrights', 'constitution', 'firstamendment', '1a',
+                                 'secondamendment', '2a', 'rbg', 'justice', 'ussupremecourt', 'kavanaugh', 'chiefjustice', 'scalia',
+                                 'abortion', 'justicekennedy', 'decision', 'highcourt']
+initialSearchDict['accounts'] = ['stevenmazie', 'JeffreyToobin', 'DCCIR', 'GregStohr', 'AlisonFrankel', 'ReutersLegal', 'VerdictJustia',
+                                 'scotusreporter', 'AppellateDaily', 'Profepps', 'Dahlialitchwick', 'Arianedevogue', 'HarlanInstitute',
+                                 'JanCBS', 'richardjwolf', 'JoanBiskupic', 'SCOTUSblogposts', 'JonathanTurley', 'VolokhC', 'LllCornell',
+                                 'JessBravin', 'NinaTotenberg', 'FedcourtJunkie', 'lylden', 'SupremeHaiku', 'joshgerstein', 'sfw70', 'AP_Courtside',
+                                 'ZoeTillman', 'sethstern', 'rickhasen', 'DCDicta', 'SCOTUSOpinions', 'eckholm', 'shermancourt', 'JustADCohen',
+                                 'lawrencehurley', 'adamliptak', 'WSJlaw', 'fordm', 'kashhill', 'stevenportnoy', 'chrisgeidner', 'atlblog',
+                                 'DavidLBrownJr', 'danabrams', 'oyez', 'Tonymauro', 'ShannonBream', 'Legal_Times', 'joe_palazzolo', 'USSupremeCourt',
+                                 'SCOTUSblog', 'LegalWeek', 'ABAJournal', 'DavidLat', 'ryanjreilly', 'AHow_eBlogger', 'andrew_chung',
+                                 'AndrewOReilly84', 'DavidGSavage', 'jackshafer', 'KevinDaleyDC', 'mjs_DC', 'imillhiser', 'jacq_thomsen',
+                                 'jessicagresko', 'PeteWilliamsNBC', 'tuckerhiggins', 'GreenhouseLinda', 'WheelerLydia', 'SchoolLawBlog',
+                                 'RonnBlitzer', 'Tierney_Megan']
 initialSearchDict['notAccounts'] = ['John_Scotus', 'ScotusCC']
 initialSearchDict['fromDate'] = datetime.strftime(timezone.now() - timedelta(1), '%Y-%m-%d')
 initialSearchDict['toDate'] = datetime.strftime(timezone.now(), '%Y-%m-%d')
