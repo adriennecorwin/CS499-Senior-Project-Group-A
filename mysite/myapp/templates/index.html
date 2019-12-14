@@ -51,7 +51,7 @@ h1, th {font-family: "Helvetica Neue", sans-serif}
                       <div class="card small">
                         <div class="card-content">
                           {% if tweet.isRetweet %}
-                            <p>Retweeted by: <a href="http://www.twitter.com/{{ tweet.newUser.username }}" target="_blank">@{{tweet.newUser.username}}</a></p>
+                            <p>Retweeted by: <a href="http://www.twitter.com/{{ tweet.newUser.username }}" target="_blank">@{{tweet.newUser.username}} {%if tweet.newUser.isVerified %}<i class="material-icons">check_circle</i>{% endif %}</a></p>
                             {% if tweet.commentText %}
                                 <span class="activator grey-text text-darken-4"><h6>{{tweet.commentText|urlize}}</h6></span>
                             {% endif %}
@@ -59,7 +59,7 @@ h1, th {font-family: "Helvetica Neue", sans-serif}
 
                           {% endif %}
                           <span class="activator grey-text text-darken-4"><h6>{{tweet.originalText|urlize}}</h6><i class="material-icons right">more_vert</i></span>
-                          <a href="http://www.twitter.com/{{ tweet.originalUser.username }}"><h6>- @{{tweet.originalUser.username}} {%if tweet.user.isVerified %}<i class="material-icons">check_circle</i>{% endif %}</h6></a>
+                          <a href="http://www.twitter.com/{{ tweet.originalUser.username }}"><h6>- @{{tweet.originalUser.username}} {%if tweet.originalUser.isVerified %}<i class="material-icons">check_circle</i>{% endif %}</h6></a>
                           {% if tweet.isRetweet %}
                             </div>
                           {% endif %}
